@@ -352,7 +352,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 4.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -755,6 +755,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &709654391
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 709654392}
+  m_Layer: 0
+  m_Name: Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &709654392
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709654391}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1569267830}
+  - {fileID: 1789430201}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &968505461
 GameObject:
   m_ObjectHideFlags: 0
@@ -922,10 +955,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1569267830}
-  - component: {fileID: 1569267829}
   - component: {fileID: 1569267831}
   - component: {fileID: 1569267833}
   - component: {fileID: 1569267832}
+  - component: {fileID: 1569267835}
+  - component: {fileID: 1569267834}
   m_Layer: 0
   m_Name: GridManager
   m_TagString: Untagged
@@ -933,33 +967,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1569267829
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1569267828}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 000d23c1b216b424d90eba8de17811c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GridManager
-  largeur: 16
-  hauteur: 9
-  cellSize: 1
-  entreeX: 0
-  entreeY: 4
-  sortieX: 15
-  sortieY: 4
-  solTilemap: {fileID: 968505464}
-  obstaclesTilemap: {fileID: 605171573}
-  tuileSol: {fileID: 11400000, guid: 8cd720c69932fe8438b67f0430c0ac69, type: 2}
-  tuileBarricade: {fileID: 11400000, guid: 236029537cd48644db31629acb57a0c2, type: 2}
-  cheminTilemap: {fileID: 559658675}
-  tuileEntree: {fileID: 11400000, guid: 20cb650329e9b474fbb46a0c1cff4f65, type: 2}
-  tuileSortie: {fileID: 11400000, guid: 5d9c6ca16bbb7294c8333348f06c26c7, type: 2}
-  tuileChemin: {fileID: 11400000, guid: a8fa9c95f57d13c4488e23eb99f98c11, type: 2}
 --- !u!4 &1569267830
 Transform:
   m_ObjectHideFlags: 0
@@ -968,12 +975,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1569267828}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 709654392}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1569267831
 MonoBehaviour:
@@ -1022,6 +1029,87 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 16, y: 9, z: 0.1}
   m_Center: {x: 8, y: 4.5, z: 0}
+--- !u!114 &1569267834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569267828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2b9a77646d1ffc4590b8e3d3de5d8c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GridVisualizer
+  solTilemap: {fileID: 968505464}
+  obstaclesTilemap: {fileID: 605171573}
+  tuileSol: {fileID: 11400000, guid: f615dbbebec887c47b071419ff3670c8, type: 2}
+  tuileBarricade: {fileID: 11400000, guid: 236029537cd48644db31629acb57a0c2, type: 2}
+  cheminTilemap: {fileID: 559658675}
+  tuileEntree: {fileID: 11400000, guid: 20cb650329e9b474fbb46a0c1cff4f65, type: 2}
+  tuileSortie: {fileID: 11400000, guid: 5d9c6ca16bbb7294c8333348f06c26c7, type: 2}
+  tuileChemin: {fileID: 11400000, guid: 906d62b6335eaca4aa0ae72bfae2fd94, type: 2}
+--- !u!114 &1569267835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569267828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b6939a8b788c31419887ed6781df664, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GridData
+  largeur: 16
+  hauteur: 9
+  cellSize: 1
+--- !u!1 &1789430200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1789430201}
+  - component: {fileID: 1789430202}
+  m_Layer: 0
+  m_Name: LevelManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1789430201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789430200}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 6.87489, y: 4.56028, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 709654392}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1789430202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789430200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 598f831db0012d648886416c53a9d693, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelManager
+  startCoords: {x: 0, y: 4}
+  endCoords: {x: 15, y: 4}
 --- !u!1 &1873773628
 GameObject:
   m_ObjectHideFlags: 0
@@ -1167,7 +1255,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 619394802}
-  - {fileID: 1569267830}
+  - {fileID: 709654392}
   - {fileID: 2080379205}
   - {fileID: 1873773630}
   - {fileID: 1280169557}

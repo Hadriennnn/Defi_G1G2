@@ -1,0 +1,21 @@
+using System;  
+using System.Collections.Generic;  
+using UnityEngine;
+
+public static class GameEvents  
+{  
+    // L'événement classique quand la grille change
+    public static event Action OnGridChanged;
+
+    // Pour dire au visuel de dessiner le nouveau chemin
+    public static event Action<List<Node>> OnPathUpdated;
+
+    // Pour dire au visuel de dessiner ou retirer une barricade
+    public static event Action<Vector3Int, bool> OnObstacleToggled;
+
+    public static void TriggerGridChanged() => OnGridChanged?.Invoke();  
+
+    public static void TriggerPathUpdated(List<Node> path) => OnPathUpdated?.Invoke(path);  
+    
+    public static void TriggerObstacleToggled(Vector3Int position, bool isPlaced) => OnObstacleToggled?.Invoke(position, isPlaced);  
+}
