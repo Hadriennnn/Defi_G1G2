@@ -11,7 +11,7 @@ public class GridData : MonoBehaviour
     public float cellSize = 1f;
     
 
-    void Awake()
+    public void Init()
     {
         GenerateGridData();
     }

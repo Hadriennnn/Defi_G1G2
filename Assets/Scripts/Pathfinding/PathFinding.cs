@@ -5,27 +5,27 @@ public class Pathfinding : MonoBehaviour , IPathfinder
 {  
    private GridData gridData;  
    private PathNode[,] pathGrid; // Grille de calcul isolée
+   
+   private List<Node> dernierCheminValide = new List<Node>();
 
-   void Awake()  
+   public void Init()  
    {  
        gridData = GetComponent<GridData>();  
+       
        InitializePathGrid();  
-   }  
-
-   void Start()  
-   {  
-       // Calcul du chemin initial au lancement  
        RecalculerCheminGlobal();
    }  
-
+   
    void OnEnable()  
    {  
-       GameEvents.OnGridChanged += RecalculerCheminGlobal;  
+       GameEvents.OnGridChanged += RecalculerCheminGlobal;
+       GameEvents.OnGameStateChanged += GererChangementPhase;
    }  
 
    void OnDisable()  
    {  
        GameEvents.OnGridChanged -= RecalculerCheminGlobal;  
+       GameEvents.OnGameStateChanged -= GererChangementPhase;
    }  
 
    private void RecalculerCheminGlobal()  
@@ -151,6 +151,7 @@ public class Pathfinding : MonoBehaviour , IPathfinder
        }  
 
        path.Reverse();  
+       dernierCheminValide = path;
        GameEvents.TriggerPathUpdated(path);  
    }  
 
@@ -160,9 +161,40 @@ public class Pathfinding : MonoBehaviour , IPathfinder
        int dstY = Mathf.Abs(nodeA.GridNode.gridY - nodeB.GridNode.gridY);  
        return 10 * (dstX + dstY);  
    }  
+   
+   private void GererChangementPhase(GameState state)
+   {
+       if (state == GameState.ActionPhase && dernierCheminValide != null)
+       {
+           List<Vector3> waypointsFinaux = new List<Vector3>();
+           Vector3 origineGrille = transform.position; // L'origine du monde de ta grille
+
+           foreach (Node n in dernierCheminValide)
+           {
+               // On convertit les Node(X,Y) en Vector3.
+               // On ajoute cellSize / 2f pour que l'ennemi marche au MILIEU de la case.
+               float worldX = origineGrille.x + (n.gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+               float worldY = origineGrille.y + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+               
+               waypointsFinaux.Add(new Vector3(worldX, worldY, 0));
+           }
+
+           // On envoie la liste verrouillée au LevelManager !
+           if (LevelManager.Instance != null)
+           {
+               LevelManager.Instance.EnregistrerWaypoints(waypointsFinaux);
+           }
+       }
+   }
+   
+   
 }
 
-// LA CLASSE REFACTORISÉE POUR LE COUPLAGE FORT (SOLID)
+
+
+
+
+
 public class PathNode : IHeapItem<PathNode>  
 {  
    public Node GridNode { get; private set; } // Référence vers le nœud de données pur
@@ -192,5 +224,7 @@ public class PathNode : IHeapItem<PathNode>
            compare = hCost.CompareTo(nodeToCompare.hCost);  
        }  
        return -compare;  
-   }  
+   }
+
+   
 }

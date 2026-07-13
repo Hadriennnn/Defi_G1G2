@@ -19,14 +19,10 @@ public class GridVisualizer : MonoBehaviour
    public TileBase tuileSortie;  
    public TileBase tuileChemin;  
 
-   void Awake()  
+   public void Init()  
    {  
        gridData = GetComponent<GridData>();  
-   }  
-
-   void Start()  
-   {  
-       DrawBaseGrid();  
+       DrawBaseGrid();
    }  
 
    private void OnEnable()  
@@ -47,6 +43,13 @@ public class GridVisualizer : MonoBehaviour
        solTilemap.ClearAllTiles();  
        obstaclesTilemap.ClearAllTiles();  
        cheminTilemap.ClearAllTiles();  
+       
+       // Récupération dynamique des positions depuis le LevelManager
+       Vector3Int startTilePos = new Vector3Int(LevelManager.Instance.startCoords.x, LevelManager.Instance.startCoords.y, 0);
+       Vector3Int endTilePos = new Vector3Int(LevelManager.Instance.endCoords.x, LevelManager.Instance.endCoords.y, 0);
+
+       cheminTilemap.SetTile(startTilePos, tuileEntree);  
+       cheminTilemap.SetTile(endTilePos, tuileSortie);  
 
        for (int x = 0; x < gridData.largeur; x++)  
        {  

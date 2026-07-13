@@ -1,33 +1,75 @@
-using UnityEngine;  
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;  
 using UnityEngine.Tilemaps;  
 
 public class PlacementManager : MonoBehaviour  
 {  
    private GridData gridData;  
-   private IPathfinder pathfinder; // Référence directe et découplée via l'interface
+   private IPathfinder pathfinder; 
 
    [Header("Configuration du Survol (Hover)")]  
    public Tilemap hoverTilemap;  
    public TileBase tuileHover;  
 
-   private Vector3Int derniereCaseSurvolee = new Vector3Int(-1, -1, -1);  
+   [Header("Configuration des Structures")]
+   public GameObject towerPrefab; // <-- NOUVEAU : Le Prefab de ta BasicTower
+   
+   // NOUVEAU : Un dictionnaire pour mémoriser quelle tour est sur quelle case
+   private Dictionary<Vector2Int, GameObject> placedTowers = new Dictionary<Vector2Int, GameObject>();
+
+   private Vector3Int derniereCaseSurvolee = new Vector3Int(-1, -1, -1);
+   private bool peutPlacer = true;
 
    void Awake()  
    {  
        gridData = GetComponent<GridData>();  
-       
-       // On cherche un composant sur ce GameObject (ou dans la scène) qui implémente IPathfinder
        pathfinder = GetComponent<IPathfinder>();  
        
        if (pathfinder == null)
        {
-           Debug.LogError("PlacementManager : Aucun composant implémentant IPathfinder n'a été trouvé sur ce GameObject !");
+           Debug.LogError("PlacementManager : Aucun composant implémentant IPathfinder n'a été trouvé !");
        }
-   }  
+   }
 
-   void Update()  
-   {  
+   void OnEnable()
+   {
+       GameEvents.OnGameStateChanged += GererChangementDePhase;
+   }
+
+   void OnDisable()
+   {
+       GameEvents.OnGameStateChanged -= GererChangementDePhase;
+   }
+
+   private void GererChangementDePhase(GameState newState)
+   {
+       if (newState == GameState.PreparationPhase)
+       {
+           peutPlacer = true;
+       }
+       else if (newState == GameState.ActionPhase)
+       {
+           peutPlacer = false;
+           hoverTilemap.ClearAllTiles();
+       }
+   }
+
+   void Update()
+   {
+       if (!peutPlacer) return;
+       
+       if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+       {
+           if (derniereCaseSurvolee.x != -1)
+           {
+               hoverTilemap.ClearAllTiles();
+               derniereCaseSurvolee = new Vector3Int(-1, -1, -1);
+           }
+           return; 
+       }
+       
        GererHover();  
 
        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)  
@@ -50,12 +92,10 @@ public class PlacementManager : MonoBehaviour
        if (caseActuelle != derniereCaseSurvolee)  
        {  
            hoverTilemap.SetTile(derniereCaseSurvolee, null);  
-
            if (gridX >= 0 && gridX < gridData.largeur && gridY >= 0 && gridY < gridData.hauteur)  
            {  
                hoverTilemap.SetTile(caseActuelle, tuileHover);  
            }  
-
            derniereCaseSurvolee = caseActuelle;  
        }  
    }  
@@ -72,26 +112,45 @@ public class PlacementManager : MonoBehaviour
 
            if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(inputCoords))  
            {  
-               return;  
+               return; // Interdit de bloquer l'entrée ou la sortie
            }  
 
            clickedNode.isWalkable = !clickedNode.isWalkable;  
 
            if (!clickedNode.isWalkable)  
            {  
-               // REFACTORISÉ : On appelle directement le pathfinder via son interface !
-               // Plus de Func statique qui crie dans le vide.
+               // 1. TENTATIVE DE PLACEMENT
                bool cheminPossible = pathfinder.FindPath(LevelManager.Instance.startCoords, LevelManager.Instance.endCoords);  
 
                if (!cheminPossible)  
                {  
                    clickedNode.isWalkable = true;  
-                   Debug.LogWarning("Placement refusé : Bloque la sortie !");  
-                   
-                   // On recalcule le chemin valide pour remettre le visuel à jour
+                   Debug.LogWarning("Placement refusé : Bloque totalement la sortie !");  
                    pathfinder.FindPath(LevelManager.Instance.startCoords, LevelManager.Instance.endCoords);  
                    return;  
                }  
+               else
+               {
+                   // 2. PLACEMENT VALIDE : Instanciation de la tour
+                   Vector3 origineGrille = transform.position;
+                   float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+                   float worldY = origineGrille.y + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+                   Vector3 spawnPos = new Vector3(worldX, worldY, 0);
+
+                   GameObject nouvelleTour = Instantiate(towerPrefab, spawnPos, Quaternion.identity);
+                   
+                   // On l'ajoute au dictionnaire pour pouvoir la retrouver
+                   placedTowers.Add(inputCoords, nouvelleTour);
+               }
+           }  
+           else  
+           {  
+               // 3. SUPPRESSION DE LA TOUR (Le joueur a recliqué sur la case)
+               if (placedTowers.ContainsKey(inputCoords))
+               {
+                   Destroy(placedTowers[inputCoords]);
+                   placedTowers.Remove(inputCoords);
+               }
            }  
 
            GameEvents.TriggerObstacleToggled(derniereCaseSurvolee, !clickedNode.isWalkable);  

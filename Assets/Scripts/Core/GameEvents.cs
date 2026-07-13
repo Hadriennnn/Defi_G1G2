@@ -12,10 +12,19 @@ public static class GameEvents
 
     // Pour dire au visuel de dessiner ou retirer une barricade
     public static event Action<Vector3Int, bool> OnObstacleToggled;
+    public static event Action<GameState> OnGameStateChanged;
+    public static void TriggerGameStateChanged(GameState newState) => OnGameStateChanged?.Invoke(newState);
 
     public static void TriggerGridChanged() => OnGridChanged?.Invoke();  
 
     public static void TriggerPathUpdated(List<Node> path) => OnPathUpdated?.Invoke(path);  
     
     public static void TriggerObstacleToggled(Vector3Int position, bool isPlaced) => OnObstacleToggled?.Invoke(position, isPlaced);  
+}
+
+// L'énumération globale pour les phases du jeu
+public enum GameState
+{
+    PreparationPhase,
+    ActionPhase
 }

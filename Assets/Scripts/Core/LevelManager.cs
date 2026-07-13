@@ -25,4 +25,14 @@ public class LevelManager : MonoBehaviour
     {
         return coords == startCoords || coords == endCoords;
     }
+    
+    [Header("Données de Combat (Générées)")]
+    public System.Collections.Generic.List<Vector3> Waypoints { get; private set; } = new System.Collections.Generic.List<Vector3>();
+
+    // Fonction appelée par le Pathfinding au début de la phase d'action
+    public void EnregistrerWaypoints(System.Collections.Generic.List<Vector3> nouveauxWaypoints)
+    {
+        Waypoints = nouveauxWaypoints;
+        Debug.Log($"[LevelManager] Phase d'Action : {Waypoints.Count} Waypoints verrouillés pour la vague !");
+    }
 }
