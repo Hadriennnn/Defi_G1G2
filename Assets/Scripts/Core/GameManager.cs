@@ -1,5 +1,14 @@
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Singleton central qui gère l'état global de la partie (PreparationPhase vs ActionPhase) et en informe les autres scripts.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - Awake() / Init() : Initialise l'instance unique et démarre le jeu en phase de préparation.
+ * - LancerPhaseAction() / RelancerPhasePreparation() : Méthodes appelées par l'UI pour changer l'état du jeu.
+ * - ChangerEtat() : Modifie la variable CurrentState et déclenche l'événement global via GameEvents.
+ */
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }

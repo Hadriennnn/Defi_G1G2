@@ -1,6 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Contrôle l'adversaire : il suit les points de passage (waypoints) vers la base et gère sa santé en subissant des dégâts.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - Start() : Récupère son chemin sous forme de Vector3 depuis le LevelManager.
+ * - Update() / AtteindreObjectif() : Fait avancer l'ennemi de point en point et le détruit s'il touche la base.
+ * - ReceivePayload() / Die() : Soustrait les dégâts reçus de ses points de vie et gère sa mort.
+ */
+
 // L'ennemi hérite de MonoBehaviour ET signe le contrat IStatusReceiver
 public class Enemy : MonoBehaviour, IStatusReceiver
 {

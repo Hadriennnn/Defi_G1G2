@@ -1,6 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Représentation mathématique pure de la grille de jeu, stockée dans un tableau 2D de nœuds.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - Init() / GenerateGridData() : Crée la grille virtuelle en mémoire selon la largeur et la hauteur définies.
+ * - GetNeighbors() : Retourne la liste des 4 cases adjacentes (haut, bas, gauche, droite) praticables pour un nœud donné.
+ */
+
 public class GridData : MonoBehaviour
 {
     public Node[,] Grid;

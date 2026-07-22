@@ -2,7 +2,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;  
-using UnityEngine.Tilemaps;  
+using UnityEngine.Tilemaps;
+
+/* 
+ * RÉSUMÉ : Gère l'interaction de la souris avec la grille, l'instanciation des tours.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - GererChangementDePhase() : Active ou désactive la possibilité de construire selon l'état de la partie.
+ * - GererHover() : Calcule la position de la souris et affiche un indicateur visuel sur la case survolée.
+ * - PlaceBarricade() : Lance un test de pathfinding virtuel ; si valide, retire le statut "marchable", instancie la tour et déclenche la mise à jour visuelle.
+ */
 
 public class PlacementManager : MonoBehaviour  
 {  

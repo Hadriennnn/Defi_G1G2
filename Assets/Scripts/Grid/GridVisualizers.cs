@@ -1,6 +1,15 @@
 using System.Collections.Generic;  
 using UnityEngine;  
-using UnityEngine.Tilemaps;  
+using UnityEngine.Tilemaps;
+
+/* 
+ * RÉSUMÉ : Traduit la grille virtuelle mathématique en éléments visuels concrets à l'écran grâce au système de Tilemaps Unity.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - DrawBaseGrid() : Dessine le sol de base, ainsi que l'entrée et la sortie, au démarrage.
+ * - DrawPath() / DrawObstacle() : Appelés par les événements globaux pour dessiner ou effacer le tracé de l'IA ou les murs.
+ * - OnDrawGizmos() : Affiche des lignes d'aide.
+ */
 
 [RequireComponent(typeof(GridData))]  
 public class GridVisualizer : MonoBehaviour  

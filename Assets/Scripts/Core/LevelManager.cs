@@ -1,5 +1,13 @@
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Singleton servant de "mémoire" spatiale du niveau, conservant les coordonnées d'entrée/sortie et le chemin validé pour les ennemis.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - Awake() : Initialise l'instance unique.
+ * - IsStartOrEnd() : Vérifie si des coordonnées (X,Y) correspondent au point d'apparition ou à la base.
+ * - EnregistrerWaypoints() : Sauvegarde la liste finale des positions que la vague d'ennemis devra suivre.
+ */
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }

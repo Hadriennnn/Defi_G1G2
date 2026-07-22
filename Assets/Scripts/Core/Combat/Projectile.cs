@@ -1,5 +1,13 @@
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Gère le déplacement physique du projectile vers sa cible et lui inflige des dégâts (via IStatusReceiver) au moment de l'impact.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - Fire() : Injecte la cible à suivre et le colis de dégâts (HitPayload) dans le projectile au moment du tir.
+ * - Update() : Déplace le projectile, utilise un Raycast2D pour détecter la collision, appelle ReceivePayload() sur la cible puis se détruit.
+ */
+
 public class Projectile : MonoBehaviour
 {
     public float speed = 15f;

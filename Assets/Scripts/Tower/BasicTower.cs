@@ -1,5 +1,14 @@
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Comportement autonome de la tour de défense qui scanne son environnement et tire des projectiles selon une certaine cadence.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - Update() : Désactivée en phase de préparation. En action, elle gère le délai (fireCountdown) et ordonne les tirs.
+ * - UpdateTarget() : Cherche tous les ennemis via "Physics2D.OverlapCircleAll" et verrouille le plus proche du centre de la tour.
+ * - Shoot() : Crée le "colis" de dégâts et instancie un Projectile qu'elle associe à l'ennemi verrouillé.
+ */
+
 public class BasicTower : MonoBehaviour
 {
     [Header("Paramètres de Tir")]

@@ -1,5 +1,12 @@
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Point d'entrée de la scène, fait l'ordre strict d'initialisation de tous les systèmes au démarrage du jeux.
+ 
+ * MÉTHODES PRINCIPALES :
+ * - LancerLeJeu() : Initialise successivement les couches du jeux.
+ */
+
 public class GameInitiator : MonoBehaviour
 {
     [Header("Références des Systèmes")]

@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;  
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Bus d'événements global (statique) permettant aux différents systèmes de communiquer entre eux.
+ */
+
 public static class GameEvents  
 {  
     // L'événement classique quand la grille change

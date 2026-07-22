@@ -106,8 +106,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicTower
   range: 5
-  fireRate: 50
-  baseDamage: 1
+  fireRate: 2
+  baseDamage: 5
   projectilePrefab: {fileID: 7270111578509950965, guid: e01a84c0212a6ef468a53ae4749d78b0, type: 3}
   firePoint: {fileID: 131063051269590544}
   enemyLayer:

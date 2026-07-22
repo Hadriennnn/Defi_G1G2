@@ -1,6 +1,16 @@
 using System.Collections.Generic;  
 using UnityEngine;
 
+/* 
+ * RÉSUMÉ : Algorithme (A*) qui trouve le chemin le plus court sur la grille et le convertit en coordonnées.
+ * 
+ * MÉTHODES PRINCIPALES :
+ * - InitializePathGrid() : Pré-alloue les nœuds spécifiques à l'algorithme (PathNode) pour optimiser la mémoire.
+ * - FindPath() / GetNeighbors() / GetDistance() : Méthodes centrales de l'A* qui évaluent le coût des déplacements de case en case.
+ * - RetracePath() : Remonte de parent en parent pour créer la liste du chemin final.
+ * - GererChangementPhase() : Convertit les cases X/Y en Vector3 réels quand la vague démarre.
+ */
+
 public class Pathfinding : MonoBehaviour , IPathfinder
 {  
    private GridData gridData;  
