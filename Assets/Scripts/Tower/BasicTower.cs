@@ -1,14 +1,8 @@
 using UnityEngine;
 
 /* 
- * RÉSUMÉ : Comportement autonome de la tour de défense qui scanne son environnement et tire des projectiles selon une certaine cadence.
- * 
- * MÉTHODES PRINCIPALES :
- * - Update() : Désactivée en phase de préparation. En action, elle gère le délai (fireCountdown) et ordonne les tirs.
- * - UpdateTarget() : Cherche tous les ennemis via "Physics2D.OverlapCircleAll" et verrouille le plus proche du centre de la tour.
- * - Shoot() : Crée le "colis" de dégâts et instancie un Projectile qu'elle associe à l'ennemi verrouillé.
+ * RÉSUMÉ : Comportement autonome de la tour de défense qui scanne son environnement 3D et tire des projectiles.
  */
-
 public class BasicTower : MonoBehaviour
 {
     [Header("Paramètres de Tir")]
@@ -26,7 +20,6 @@ public class BasicTower : MonoBehaviour
 
     void Update()
     {
-        // 1. CORRECTION : Ajout des accolades pour englober le return !
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.PreparationPhase)
         {
             return;
@@ -46,15 +39,16 @@ public class BasicTower : MonoBehaviour
 
     void UpdateTarget()
     {
-        // 2. CORRECTION : Utilisation de Physics2D et Collider2D
-        Collider2D[] enemiesInRange = Physics2D.OverlapCircleAll(transform.position, range, enemyLayer);
+        // CORRECTION 3D : On utilise Collider et Physics.OverlapSphere
+        Collider[] enemiesInRange = Physics.OverlapSphere(transform.position, range, enemyLayer);
         
         float shortestDistance = Mathf.Infinity;
         Transform nearestEnemy = null;
 
-        foreach (Collider2D enemyCollider in enemiesInRange)
+        foreach (Collider enemyCollider in enemiesInRange)
         {
-            float distanceToEnemy = Vector2.Distance(transform.position, enemyCollider.transform.position);
+            // CORRECTION 3D : On utilise Vector3 pour calculer la distance
+            float distanceToEnemy = Vector3.Distance(transform.position, enemyCollider.transform.position);
             if (distanceToEnemy < shortestDistance)
             {
                 shortestDistance = distanceToEnemy;
@@ -69,6 +63,7 @@ public class BasicTower : MonoBehaviour
     {
         HitPayload payload = new HitPayload { rawDamage = baseDamage };
 
+        // On instancie le projectile au niveau du canon de la tour
         GameObject projGO = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
         Projectile projectile = projGO.GetComponent<Projectile>();
         
@@ -81,6 +76,7 @@ public class BasicTower : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
+        // DrawWireSphere fonctionne parfaitement en 3D !
         Gizmos.DrawWireSphere(transform.position, range);
     }
 }

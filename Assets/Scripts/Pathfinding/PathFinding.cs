@@ -177,19 +177,19 @@ public class Pathfinding : MonoBehaviour , IPathfinder
        if (state == GameState.ActionPhase && dernierCheminValide != null)
        {
            List<Vector3> waypointsFinaux = new List<Vector3>();
-           Vector3 origineGrille = transform.position; // L'origine du monde de ta grille
+           Vector3 origineGrille = transform.position; 
 
            foreach (Node n in dernierCheminValide)
            {
-               // On convertit les Node(X,Y) en Vector3.
-               // On ajoute cellSize / 2f pour que l'ennemi marche au MILIEU de la case.
+               // CORRECTION 3D : On convertit gridX en X, et gridY en axe Z (profondeur)
                float worldX = origineGrille.x + (n.gridX * gridData.cellSize) + (gridData.cellSize / 2f);
-               float worldY = origineGrille.y + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+               float worldZ = origineGrille.z + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
                
-               waypointsFinaux.Add(new Vector3(worldX, worldY, 0));
+               // On surélève le point (Y = +0.5f) pour que le centre de l'ennemi soit au-dessus du sol
+               // (Tu pourras ajuster ce 0.5f en fonction de la taille de ton modèle Blender)
+               waypointsFinaux.Add(new Vector3(worldX, origineGrille.y + 0.5f, worldZ));
            }
 
-           // On envoie la liste verrouillée au LevelManager !
            if (LevelManager.Instance != null)
            {
                LevelManager.Instance.EnregistrerWaypoints(waypointsFinaux);

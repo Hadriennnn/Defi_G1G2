@@ -24,6 +24,12 @@ public static class GameEvents
     public static void TriggerPathUpdated(List<Node> path) => OnPathUpdated?.Invoke(path);  
     
     public static void TriggerObstacleToggled(Vector3Int position, bool isPlaced) => OnObstacleToggled?.Invoke(position, isPlaced);  
+    
+    // Pour les Waves
+    public static event Action OnEnemySpawned;
+    public static event Action OnEnemyRemoved;
+    public static void TriggerEnemySpawned() => OnEnemySpawned?.Invoke();
+    public static void TriggerEnemyRemoved() => OnEnemyRemoved?.Invoke();
 }
 
 // L'énumération globale pour les phases du jeu

@@ -1,122 +1,138 @@
 using System.Collections.Generic;  
 using UnityEngine;  
-using UnityEngine.Tilemaps;
 
 /* 
- * RÉSUMÉ : Traduit la grille virtuelle mathématique en éléments visuels concrets à l'écran grâce au système de Tilemaps Unity.
- * 
- * MÉTHODES PRINCIPALES :
- * - DrawBaseGrid() : Dessine le sol de base, ainsi que l'entrée et la sortie, au démarrage.
- * - DrawPath() / DrawObstacle() : Appelés par les événements globaux pour dessiner ou effacer le tracé de l'IA ou les murs.
- * - OnDrawGizmos() : Affiche des lignes d'aide.
+ * RÉSUMÉ : Traduit la grille virtuelle mathématique en éléments visuels 3D concrets à l'écran grâce à des Prefabs.
  */
-
 [RequireComponent(typeof(GridData))]  
 public class GridVisualizer : MonoBehaviour  
 {  
-   private GridData gridData;  
+    private GridData gridData;  
 
-   [Header("Configuration Tilemap (Décors)")]  
-   public Tilemap solTilemap;  
-   public Tilemap obstaclesTilemap;  
-   public TileBase tuileSol;  
-   public TileBase tuileBarricade;  
+    [Header("Configuration Décors 3D")]  
+    [Tooltip("Le modèle 3D (Prefab) utilisé pour le sol de base.")]
+    public GameObject tuileSolPrefab;  
 
-   [Header("Configuration Tilemap (Interface)")]  
-   public Tilemap cheminTilemap;  
-   public TileBase tuileEntree;  
-   public TileBase tuileSortie;  
-   public TileBase tuileChemin;  
+    [Header("Configuration Interface 3D")]  
+    public GameObject tuileEntreePrefab;  
+    public GameObject tuileSortiePrefab;  
+    [Tooltip("Le modèle 3D utilisé pour tracer le chemin de l'IA.")]
+    public GameObject tuileCheminPrefab;  
 
-   public void Init()  
-   {  
-       gridData = GetComponent<GridData>();  
-       DrawBaseGrid();
-   }  
+    // Liste pour garder une trace des éléments du chemin et pouvoir les effacer
+    private List<GameObject> objetsChemin = new List<GameObject>();
 
-   private void OnEnable()  
-   {  
-       // On s'abonne aux ordres du cerveau  
-       GameEvents.OnPathUpdated += DrawPath;  
-       GameEvents.OnObstacleToggled += DrawObstacle;  
-   }  
+    public void Init()  
+    {  
+        gridData = GetComponent<GridData>();  
+        DrawBaseGrid();
+    }  
 
-   private void OnDisable()  
-   {  
-       GameEvents.OnPathUpdated -= DrawPath;  
-       GameEvents.OnObstacleToggled -= DrawObstacle;  
-   }  
+    private void OnEnable()  
+    {  
+        // On s'abonne aux ordres du cerveau  
+        GameEvents.OnPathUpdated += DrawPath;  
+    }  
 
-   void DrawBaseGrid()  
-   {  
-       solTilemap.ClearAllTiles();  
-       obstaclesTilemap.ClearAllTiles();  
-       cheminTilemap.ClearAllTiles();  
-       
-       // Récupération dynamique des positions depuis le LevelManager
-       Vector3Int startTilePos = new Vector3Int(LevelManager.Instance.startCoords.x, LevelManager.Instance.startCoords.y, 0);
-       Vector3Int endTilePos = new Vector3Int(LevelManager.Instance.endCoords.x, LevelManager.Instance.endCoords.y, 0);
+    private void OnDisable()  
+    {  
+        GameEvents.OnPathUpdated -= DrawPath;  
+    }  
 
-       cheminTilemap.SetTile(startTilePos, tuileEntree);  
-       cheminTilemap.SetTile(endTilePos, tuileSortie);  
+    void DrawBaseGrid()  
+    {  
+        // Récupération dynamique des positions depuis le LevelManager
+        Vector2Int startCoords = LevelManager.Instance.startCoords;
+        Vector2Int endCoords = LevelManager.Instance.endCoords;
 
-       for (int x = 0; x < gridData.largeur; x++)  
-       {  
-           for (int y = 0; y < gridData.hauteur; y++)  
-           {  
-               solTilemap.SetTile(new Vector3Int(x, y, 0), tuileSol);  
-           }  
-       }  
-   }  
+        for (int x = 0; x < gridData.largeur; x++)  
+        {  
+            for (int y = 0; y < gridData.hauteur; y++)  
+            {  
+                Vector3 position = GetWorldPosition(x, y);
+                
+                // On surélève légèrement le sol visuel (0.01f) pour qu'il soit juste au-dessus du "Ground" invisible
+                position.y += 0.01f; 
 
-   public void DrawPath(List<Node> path)  
-   {  
-       cheminTilemap.ClearAllTiles();  
+                GameObject prefabADessiner = tuileSolPrefab;
 
-       // Sécurité si le LevelManager n'est pas encore instancié
-       if (LevelManager.Instance == null) return;
+                // On vérifie si la case actuelle est l'entrée ou la sortie
+                if (x == startCoords.x && y == startCoords.y && tuileEntreePrefab != null)
+                {
+                    prefabADessiner = tuileEntreePrefab;
+                }
+                else if (x == endCoords.x && y == endCoords.y && tuileSortiePrefab != null)
+                {
+                    prefabADessiner = tuileSortiePrefab;
+                }
 
-       // Récupération dynamique des positions depuis le LevelManager
-       Vector3Int startTilePos = new Vector3Int(LevelManager.Instance.startCoords.x, LevelManager.Instance.startCoords.y, 0);
-       Vector3Int endTilePos = new Vector3Int(LevelManager.Instance.endCoords.x, LevelManager.Instance.endCoords.y, 0);
+                if (prefabADessiner != null)
+                {
+                    Instantiate(prefabADessiner, position, prefabADessiner.transform.rotation, transform);
+                }
+            }  
+        }  
+    }  
 
-       cheminTilemap.SetTile(startTilePos, tuileEntree);  
-       cheminTilemap.SetTile(endTilePos, tuileSortie);  
+    public void DrawPath(List<Node> path)  
+    {  
+        //On nettoie l'ancien chemin visuel
+        foreach (GameObject objet in objetsChemin)
+        {
+            Destroy(objet);
+        }
+        objetsChemin.Clear();
 
-       if (path != null)  
-       {  
-           foreach (Node n in path)  
-           {  
-               // On empêche la tuile "chemin" d'écraser visuellement l'entrée ou la sortie
-               if ((n.gridX == startTilePos.x && n.gridY == startTilePos.y) ||  
-                   (n.gridX == endTilePos.x && n.gridY == endTilePos.y))  
-                   continue;  
+        if (LevelManager.Instance == null || path == null) return;
 
-               cheminTilemap.SetTile(new Vector3Int(n.gridX, n.gridY, 0), tuileChemin);  
-           }  
-       }  
-   }  
+        Vector2Int startCoords = LevelManager.Instance.startCoords;
+        Vector2Int endCoords = LevelManager.Instance.endCoords;
 
-   public void DrawObstacle(Vector3Int position, bool isPlaced)  
-   {  
-       if (isPlaced)  
-           obstaclesTilemap.SetTile(position, tuileBarricade);  
-       else  
-           obstaclesTilemap.SetTile(position, null);  
-   }  
+        //On dessine le nouveau chemin
+        foreach (Node n in path)  
+        {  
+            // On empêche le chemin de recouvrir visuellement l'entrée ou la sortie
+            if ((n.gridX == startCoords.x && n.gridY == startCoords.y) ||  
+                (n.gridX == endCoords.x && n.gridY == endCoords.y))  
+                continue;  
 
-   private void OnDrawGizmos()  
-   {  
-       if (gridData == null) gridData = GetComponent<GridData>();  
-       if (gridData == null) return;  
+            if (tuileCheminPrefab != null)
+            {
+                Vector3 position = GetWorldPosition(n.gridX, n.gridY);
+                
+                //On surélève l'indicateur pour éviter la superposition
+                // ATTENTION j'ai mis des nombres au pif donc faudra un jour gérer l'odre de superpostition 
+                position.y += 0.05f; 
+
+                // On respecte la rotation d'origine du Prefab
+                GameObject cheminObj = Instantiate(tuileCheminPrefab, position, tuileCheminPrefab.transform.rotation, transform);
+                objetsChemin.Add(cheminObj);
+            }
+        }  
+    }  
+
+    // Fonction utilitaire pour convertir X/Y (mathématique) en X/Z (physique)
+    private Vector3 GetWorldPosition(int gridX, int gridY)
+    {
+        Vector3 origineGrille = transform.position;
+        float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+        float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
         
-       Gizmos.color = Color.white;  
-       Vector3 origin = transform.position;  
+        return new Vector3(worldX, origineGrille.y, worldZ);
+    }
 
-       for (int i = 0; i <= gridData.largeur; i++)  
-           Gizmos.DrawLine(origin + new Vector3(gridData.cellSize * i, 0, 0), origin + new Vector3(gridData.cellSize * i, gridData.hauteur * gridData.cellSize, 0));  
+    private void OnDrawGizmos()  
+    {  
+        if (gridData == null) gridData = GetComponent<GridData>();  
+        if (gridData == null) return;  
+        
+        Gizmos.color = Color.white;  
+        Vector3 origin = transform.position;  
+        
+        for (int i = 0; i <= gridData.largeur; i++)  
+            Gizmos.DrawLine(origin + new Vector3(gridData.cellSize * i, 0, 0), origin + new Vector3(gridData.cellSize * i, 0, gridData.hauteur * gridData.cellSize));  
             
-       for (int j = 0; j <= gridData.hauteur; j++)  
-           Gizmos.DrawLine(origin + new Vector3(0, gridData.cellSize * j, 0), origin + new Vector3(gridData.largeur * gridData.cellSize, gridData.cellSize * j, 0));  
-   }  
+        for (int j = 0; j <= gridData.hauteur; j++)  
+            Gizmos.DrawLine(origin + new Vector3(0, 0, gridData.cellSize * j), origin + new Vector3(gridData.largeur * gridData.cellSize, 0, gridData.cellSize * j));  
+    }  
 }

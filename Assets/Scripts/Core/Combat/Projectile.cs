@@ -1,13 +1,8 @@
 using UnityEngine;
 
-/* 
- * RÉSUMÉ : Gère le déplacement physique du projectile vers sa cible et lui inflige des dégâts (via IStatusReceiver) au moment de l'impact.
- * 
- * MÉTHODES PRINCIPALES :
- * - Fire() : Injecte la cible à suivre et le colis de dégâts (HitPayload) dans le projectile au moment du tir.
- * - Update() : Déplace le projectile, utilise un Raycast2D pour détecter la collision, appelle ReceivePayload() sur la cible puis se détruit.
+/*
+ * RÉSUMÉ : Gère le déplacement physique 3D du projectile vers sa cible.
  */
-
 public class Projectile : MonoBehaviour
 {
     public float speed = 15f;
@@ -30,15 +25,13 @@ public class Projectile : MonoBehaviour
             return;
         }
 
+        // Le projectile vise le centre de la cible en 3D
         Vector3 direction = (target.position - transform.position).normalized;
         float distanceThisFrame = speed * Time.deltaTime;
-
-        // CORRECTION : On utilise Physics2D.Raycast qui renvoie un RaycastHit2D
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, distanceThisFrame, enemyLayer);
-
-        // En 2D, si hit.collider n'est pas null, c'est qu'on a touché quelque chose
-        if (hit.collider != null)
+        
+        if (Physics.Raycast(transform.position, direction, out RaycastHit hit, distanceThisFrame, enemyLayer))
         {
+            // Si on touche un collider, on vérifie s'il a le contrat IStatusReceiver
             IStatusReceiver receiver = hit.collider.GetComponent<IStatusReceiver>();
             if (receiver != null)
             {
@@ -50,5 +43,8 @@ public class Projectile : MonoBehaviour
         }
 
         transform.Translate(direction * distanceThisFrame, Space.World);
+        
+        // Faire pointer le projectile visuellement vers la cible
+        transform.rotation = Quaternion.LookRotation(direction);
     }
 }
