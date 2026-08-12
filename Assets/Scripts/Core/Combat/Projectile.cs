@@ -21,30 +21,38 @@ public class Projectile : MonoBehaviour
     {
         if (target == null)
         {
-            Destroy(gameObject);
+            RetournerAuPool(); // <--- REMPLACE Destroy(gameObject)
             return;
         }
 
-        // Le projectile vise le centre de la cible en 3D
         Vector3 direction = (target.position - transform.position).normalized;
         float distanceThisFrame = speed * Time.deltaTime;
         
         if (Physics.Raycast(transform.position, direction, out RaycastHit hit, distanceThisFrame, enemyLayer))
         {
-            // Si on touche un collider, on vérifie s'il a le contrat IStatusReceiver
             IStatusReceiver receiver = hit.collider.GetComponent<IStatusReceiver>();
             if (receiver != null)
             {
                 receiver.ReceivePayload(myPayload);
             }
 
-            Destroy(gameObject); // Destruction du projectile après livraison
+            RetournerAuPool(); // <--- REMPLACE Destroy(gameObject)
             return;
         }
 
         transform.Translate(direction * distanceThisFrame, Space.World);
-        
-        // Faire pointer le projectile visuellement vers la cible
         transform.rotation = Quaternion.LookRotation(direction);
+    }
+    
+    private void RetournerAuPool()
+    {
+        if (TryGetComponent<PooledItem>(out PooledItem pooledItem))
+        {
+            pooledItem.ReleaseToPool();
+        }
+        else
+        {
+            Destroy(gameObject); // Sécurité de repli
+        }
     }
 }

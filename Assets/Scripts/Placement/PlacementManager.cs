@@ -117,13 +117,14 @@ public class PlacementManager : MonoBehaviour
                     if (hoverIndicator != null)
                     {
                         hoverIndicator.SetActive(true);
+                        float hauteurTuile = gridData.Grid[gridX, gridY].elevation;
                         
                         // On recalcule le centre exact de la case en 3D
                         float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
                         float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
                         
                         
-                        hoverIndicator.transform.position = new Vector3(worldX, origineGrille.y + 0.06f, worldZ);
+                        hoverIndicator.transform.position = new Vector3(worldX, origineGrille.y + hauteurTuile + 0.03f, worldZ);
                     }
                 }  
             }
@@ -176,15 +177,17 @@ public class PlacementManager : MonoBehaviour
                 }  
                 else
                 {
+                    float hauteurTuile = clickedNode.elevation;
                     // PLACEMENT EN 3D
                     Vector3 origineGrille = transform.position;
                     float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
                     float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
                     
                     
-                    Vector3 spawnPos = new Vector3(worldX, origineGrille.y, worldZ);
+                    Vector3 spawnPos = new Vector3(worldX, origineGrille.y + hauteurTuile, worldZ);
 
-                    GameObject nouvelleTour = Instantiate(towerPrefab, spawnPos, Quaternion.identity);
+                    // On remplace Quaternion.identity par towerPrefab.transform.rotation
+                    GameObject nouvelleTour = Instantiate(towerPrefab, spawnPos, towerPrefab.transform.rotation);
                     placedTowers.Add(inputCoords, nouvelleTour);
                 }
             }  

@@ -98,8 +98,8 @@ public class Pathfinding : MonoBehaviour , IPathfinder
 
            foreach (PathNode neighbor in GetNeighbors(currentNode))  
            {  
-               // On lit le "isWalkable" depuis la vraie grille GridData sous-jacente
-               if (!neighbor.GridNode.isWalkable || closedSet.Contains(neighbor))  
+               // On lit le "isWalkable" depuis la vraie grille GridData sous-jacente et on vérifie l'élévation
+               if (!neighbor.GridNode.isWalkable || neighbor.GridNode.elevation > 0f || closedSet.Contains(neighbor))
                {  
                    continue;  
                }  

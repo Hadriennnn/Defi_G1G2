@@ -1,16 +1,17 @@
 using UnityEngine;
 
 /* 
- * RÉSUMÉ : Comportement autonome de la tour de défense qui scanne son environnement 3D et tire des projectiles.
+ * RÉSUMÉ : Le Cerveau de la tour. Il gère uniquement la détection (mathématique) et le déclenchement des tirs.
  */
 public class BasicTower : MonoBehaviour
 {
     [Header("Paramètres de Tir")]
     public float range = 5f;
-    public float fireRate = 1f; // Tirs par seconde
+    public float fireRate = 1f; 
     public float baseDamage = 25f;
+    public Vector3 centerOffset = new Vector3(0f, 1f, 0f);
 
-    [Header("Références")]
+    [Header("Références (Logique)")]
     public GameObject projectilePrefab;
     public Transform firePoint;
     public LayerMask enemyLayer; 
@@ -20,63 +21,63 @@ public class BasicTower : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.PreparationPhase)
-        {
-            return;
-        }
+        // On ne fait rien si on est en phase de préparation
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.PreparationPhase) return;
 
         fireCountdown -= Time.deltaTime;
-
+        
+        // Le cerveau cherche sa cible
         UpdateTarget();
 
+        // S'il a une cible et que le canon est prêt, il tire
         if (currentTarget != null && fireCountdown <= 0f)
         {
             Shoot();
-            Debug.Log("[Tower] Pew ! Je tire !");
             fireCountdown = 1f / fireRate;
         }
     }
 
     void UpdateTarget()
     {
-        // CORRECTION 3D : On utilise Collider et Physics.OverlapSphere
-        Collider[] enemiesInRange = Physics.OverlapSphere(transform.position, range, enemyLayer);
+        Vector3 trueCenter = transform.position + centerOffset;
+        Collider[] enemiesInRange = Physics.OverlapSphere(trueCenter, range, enemyLayer); // Utilisation native de la détection[cite: 1]
         
         float shortestDistance = Mathf.Infinity;
         Transform nearestEnemy = null;
 
         foreach (Collider enemyCollider in enemiesInRange)
         {
-            // CORRECTION 3D : On utilise Vector3 pour calculer la distance
-            float distanceToEnemy = Vector3.Distance(transform.position, enemyCollider.transform.position);
+            float distanceToEnemy = Vector3.Distance(trueCenter, enemyCollider.transform.position);
             if (distanceToEnemy < shortestDistance)
             {
                 shortestDistance = distanceToEnemy;
                 nearestEnemy = enemyCollider.transform;
             }
         }
-
         currentTarget = nearestEnemy;
     }
 
     void Shoot()
     {
-        HitPayload payload = new HitPayload { rawDamage = baseDamage };
-
-        // On instancie le projectile au niveau du canon de la tour
-        GameObject projGO = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        HitPayload payload = new HitPayload { rawDamage = baseDamage }; // Le contrat de dégâts reste intact[cite: 1]
+        
+        // On utilise notre PoolManager
+        GameObject projGO = PoolManager.Instance.Spawn(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectile = projGO.GetComponent<Projectile>();
         
-        if (projectile != null)
-        {
-            projectile.Fire(currentTarget, payload);
-        }
+        if (projectile != null) projectile.Fire(currentTarget, payload);
+    }
+
+    // NOUVEAU : Le moyen de communication pour les autres scripts (les "Muscles")
+    public Transform GetCurrentTarget()
+    {
+        return currentTarget;
     }
 
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        // DrawWireSphere fonctionne parfaitement en 3D !
-        Gizmos.DrawWireSphere(transform.position, range);
+        Vector3 trueCenter = transform.position + centerOffset;
+        Gizmos.DrawWireSphere(trueCenter, range);
     }
 }

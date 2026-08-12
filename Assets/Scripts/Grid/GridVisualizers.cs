@@ -3,6 +3,7 @@ using UnityEngine;
 
 /* 
  * RÉSUMÉ : Traduit la grille virtuelle mathématique en éléments visuels 3D concrets à l'écran grâce à des Prefabs.
+ * Gère l'Auto-Tiling directionnel pour le chemin et masque le sol en dessous pour éviter le Z-Fighting.
  */
 [RequireComponent(typeof(GridData))]  
 public class GridVisualizer : MonoBehaviour  
@@ -13,14 +14,31 @@ public class GridVisualizer : MonoBehaviour
     [Tooltip("Le modèle 3D (Prefab) utilisé pour le sol de base.")]
     public GameObject tuileSolPrefab;  
 
-    [Header("Configuration Interface 3D")]  
+    [Header("Kit de Tuiles Modulaires (Auto-Tiling)")]  
     public GameObject tuileEntreePrefab;  
     public GameObject tuileSortiePrefab;  
-    [Tooltip("Le modèle 3D utilisé pour tracer le chemin de l'IA.")]
-    public GameObject tuileCheminPrefab;  
+    
+    [Space(10)]
+    public GameObject tilePathStraight;
+    public float offsetStraight = 0f;
+    
+    [Space(5)]
+    public GameObject tilePathCorner;   
+    public float offsetCorner = 0f;
+    
+    [Space(5)]
+    public GameObject tilePathT;        
+    public float offsetT = 0f;
+    
+    [Space(5)]
+    public GameObject tilePathCross;    
+    public float offsetCross = 0f;
 
     // Liste pour garder une trace des éléments du chemin et pouvoir les effacer
     private List<GameObject> objetsChemin = new List<GameObject>();
+    
+    // NOUVEAU : Tableau pour mémoriser toutes les cases de sol (pour les masquer/afficher dynamiquement)
+    private GameObject[,] tuilesSolMemoire;
 
     public void Init()  
     {  
@@ -45,30 +63,39 @@ public class GridVisualizer : MonoBehaviour
         Vector2Int startCoords = LevelManager.Instance.startCoords;
         Vector2Int endCoords = LevelManager.Instance.endCoords;
 
+        // On initialise notre tableau de mémoire
+        tuilesSolMemoire = new GameObject[gridData.largeur, gridData.hauteur];
+
         for (int x = 0; x < gridData.largeur; x++)  
         {  
             for (int y = 0; y < gridData.hauteur; y++)  
             {  
                 Vector3 position = GetWorldPosition(x, y);
                 
-                // On surélève légèrement le sol visuel (0.01f) pour qu'il soit juste au-dessus du "Ground" invisible
-                position.y += 0.01f; 
-
                 GameObject prefabADessiner = tuileSolPrefab;
+                float elevationOffset = 0.01f; // Par défaut, le sol normal est à +0.01f
 
                 // On vérifie si la case actuelle est l'entrée ou la sortie
                 if (x == startCoords.x && y == startCoords.y && tuileEntreePrefab != null)
                 {
                     prefabADessiner = tuileEntreePrefab;
+                    elevationOffset = 0.01f; // On surélève le départ
                 }
                 else if (x == endCoords.x && y == endCoords.y && tuileSortiePrefab != null)
                 {
                     prefabADessiner = tuileSortiePrefab;
+                    elevationOffset = 0.01f; // On surélève l'arrivée
                 }
+
+                // On applique l'élévation spécifique à cette tuile
+                position.y += elevationOffset; 
 
                 if (prefabADessiner != null)
                 {
-                    Instantiate(prefabADessiner, position, prefabADessiner.transform.rotation, transform);
+                    GameObject solInstancie = Instantiate(prefabADessiner, position, prefabADessiner.transform.rotation, transform);
+                    
+                    // On stocke la case instanciée dans notre mémoire pour pouvoir la manipuler plus tard
+                    tuilesSolMemoire[x, y] = solInstancie;
                 }
             }  
         }  
@@ -76,19 +103,39 @@ public class GridVisualizer : MonoBehaviour
 
     public void DrawPath(List<Node> path)  
     {  
-        //On nettoie l'ancien chemin visuel
+        // 1. On nettoie l'ancien chemin visuel
         foreach (GameObject objet in objetsChemin)
         {
             Destroy(objet);
         }
         objetsChemin.Clear();
 
+        // 2. On réactive toutes les cases d'herbe qui avaient été cachées par l'ancien chemin
+        if (tuilesSolMemoire != null)
+        {
+            foreach (GameObject tuile in tuilesSolMemoire)
+            {
+                if (tuile != null) tuile.SetActive(true);
+            }
+        }
+
         if (LevelManager.Instance == null || path == null) return;
 
         Vector2Int startCoords = LevelManager.Instance.startCoords;
         Vector2Int endCoords = LevelManager.Instance.endCoords;
 
-        //On dessine le nouveau chemin
+        // 3. Création d'un "Set" pour vérifier super rapidement (sans boucle) si une case fait partie du chemin
+        HashSet<Vector2Int> pathSet = new HashSet<Vector2Int>();
+        foreach (Node n in path) 
+        {
+            pathSet.Add(new Vector2Int(n.gridX, n.gridY));
+        }
+        
+        // On ajoute artificiellement le point de départ et d'arrivée pour que les tuiles s'y connectent joliment
+        pathSet.Add(startCoords);
+        pathSet.Add(endCoords);
+
+        // 4. Calcul du Bitmask pour chaque case
         foreach (Node n in path)  
         {  
             // On empêche le chemin de recouvrir visuellement l'entrée ou la sortie
@@ -96,17 +143,110 @@ public class GridVisualizer : MonoBehaviour
                 (n.gridX == endCoords.x && n.gridY == endCoords.y))  
                 continue;  
 
-            if (tuileCheminPrefab != null)
+            Vector2Int pos = new Vector2Int(n.gridX, n.gridY);
+            
+            // On vérifie les voisins : Nord = 1, Est = 2, Sud = 4, Ouest = 8
+            int bitmask = 0;
+            if (pathSet.Contains(pos + new Vector2Int(0, 1))) bitmask += 1;  // Nord
+            if (pathSet.Contains(pos + new Vector2Int(1, 0))) bitmask += 2;  // Est
+            if (pathSet.Contains(pos + new Vector2Int(0, -1))) bitmask += 4; // Sud
+            if (pathSet.Contains(pos + new Vector2Int(-1, 0))) bitmask += 8; // Ouest
+
+            GameObject prefabToInstantiate = tilePathStraight; // Modèle par défaut
+            float rotationY = 0f;
+            float currentOffset = 0f; // L'offset spécifique à la tuile en cours
+
+            // Choix de la tuile, de sa rotation logique ET de son offset correctif
+            switch (bitmask)
+            {
+                // Lignes droites et culs-de-sac
+                case 1: case 4: case 5: 
+                    prefabToInstantiate = tilePathStraight; 
+                    rotationY = 90f; 
+                    currentOffset = offsetStraight;
+                    break;
+                case 2: case 8: case 10: 
+                    prefabToInstantiate = tilePathStraight; 
+                    rotationY = 0f; 
+                    currentOffset = offsetStraight;
+                    break;
+
+                // Virages à 90 degrés
+                case 3: 
+                    prefabToInstantiate = tilePathCorner; 
+                    rotationY = 0f; 
+                    currentOffset = offsetCorner;
+                    break;
+                case 6: 
+                    prefabToInstantiate = tilePathCorner; 
+                    rotationY = 90f; 
+                    currentOffset = offsetCorner;
+                    break;
+                case 12: 
+                    prefabToInstantiate = tilePathCorner; 
+                    rotationY = 180f; 
+                    currentOffset = offsetCorner;
+                    break;
+                case 9: 
+                    prefabToInstantiate = tilePathCorner; 
+                    rotationY = 270f; 
+                    currentOffset = offsetCorner;
+                    break;
+
+                // Intersections en T
+                case 7: 
+                    prefabToInstantiate = tilePathT; 
+                    rotationY = 0f; 
+                    currentOffset = offsetT;
+                    break;
+                case 14: 
+                    prefabToInstantiate = tilePathT; 
+                    rotationY = 90f; 
+                    currentOffset = offsetT;
+                    break;
+                case 13: 
+                    prefabToInstantiate = tilePathT; 
+                    rotationY = 180f; 
+                    currentOffset = offsetT;
+                    break;
+                case 11: 
+                    prefabToInstantiate = tilePathT; 
+                    rotationY = 270f; 
+                    currentOffset = offsetT;
+                    break;
+
+                // Croisements 4 voies
+                case 15: 
+                    prefabToInstantiate = tilePathCross; 
+                    rotationY = 0f; 
+                    currentOffset = offsetCross;
+                    break;
+            }
+
+            // 5. Instanciation visuelle
+            if (prefabToInstantiate != null)
             {
                 Vector3 position = GetWorldPosition(n.gridX, n.gridY);
                 
-                //On surélève l'indicateur pour éviter la superposition
-                // ATTENTION j'ai mis des nombres au pif donc faudra un jour gérer l'odre de superpostition 
-                position.y += 0.05f; 
-
-                // On respecte la rotation d'origine du Prefab
-                GameObject cheminObj = Instantiate(tuileCheminPrefab, position, tuileCheminPrefab.transform.rotation, transform);
+                // On met le chemin EXACTEMENT à la même hauteur que le sol de base
+                position.y += 0.01f; 
+                
+                Vector3 rotationDOrigine = prefabToInstantiate.transform.eulerAngles;
+                
+                // On applique l'offset spécifique à CETTE tuile
+                float rotationFinaleY = rotationY + rotationDOrigine.y + currentOffset;
+                
+                // On préserve les axes X et Z d'origine
+                Quaternion rotation = Quaternion.Euler(rotationDOrigine.x, rotationFinaleY, rotationDOrigine.z);
+                
+                GameObject cheminObj = Instantiate(prefabToInstantiate, position, rotation, transform);
                 objetsChemin.Add(cheminObj);
+
+                // NOUVEAU : On masque la case d'herbe qui se trouve en dessous pour éviter le Z-Fighting
+                if (tuilesSolMemoire[n.gridX, n.gridY] != null)
+                {
+                    tuilesSolMemoire[n.gridX, n.gridY].SetActive(false);
+                }
             }
         }  
     }  
