@@ -1539,6 +1539,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2b9a77646d1ffc4590b8e3d3de5d8c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridVisualizer
+  hauteurNiveau: 0.5
+  falaisePrefab: {fileID: 6876652198641081990, guid: dcaef09d314b3f942883f0e1da5c4969, type: 3}
+  profondeurSousTerre: 4
   tuileSolPrefab: {fileID: 7225866371845429028, guid: 4d46c2be36d73aa418ac7d317bb80f48, type: 3}
   tuileEntreePrefab: {fileID: 8362730902462727421, guid: 287fb5a0accdefb45819696f4fe5a4e7, type: 3}
   tuileSortiePrefab: {fileID: 2865109585621340306, guid: aad96e33ea0f8134fb1fce4f36fc4222, type: 3}
@@ -1562,9 +1565,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b6939a8b788c31419887ed6781df664, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridData
+  currentLevel: {fileID: 11400000, guid: 7c2a991c0b7b2af4da42a864ede30fe9, type: 2}
+  cellSize: 1
   largeur: 16
   hauteur: 9
-  cellSize: 1
 --- !u!1 &1789430200
 GameObject:
   m_ObjectHideFlags: 0
@@ -1609,6 +1613,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 598f831db0012d648886416c53a9d693, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
+  currentLevel: {fileID: 11400000, guid: 7c2a991c0b7b2af4da42a864ede30fe9, type: 2}
   startCoords: {x: 0, y: 4}
   endCoords: {x: 15, y: 4}
 --- !u!1 &2010708350

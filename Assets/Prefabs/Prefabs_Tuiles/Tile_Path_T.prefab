@@ -50,10 +50,43 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a71f4e4d763bb3542b9a3ebbb64a3ac4, type: 3}
       propertyPath: m_Name
-      value: Chemin_Intersection
+      value: Tile_Path_T
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a71f4e4d763bb3542b9a3ebbb64a3ac4, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a71f4e4d763bb3542b9a3ebbb64a3ac4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -2368221171797947482}
   m_SourcePrefab: {fileID: 100100000, guid: a71f4e4d763bb3542b9a3ebbb64a3ac4, type: 3}
+--- !u!1 &4333570863816241862 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: a71f4e4d763bb3542b9a3ebbb64a3ac4, type: 3}
+  m_PrefabInstance: {fileID: 3522525658828951447}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &-2368221171797947482
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4333570863816241862}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.010000001, y: 0.009999999, z: 0.0050002495}
+  m_Center: {x: 0, y: 0, z: -0.0024998747}

@@ -1,26 +1,35 @@
 using UnityEngine;
+using System.Collections.Generic; // N'oublie pas l'import pour la List
 
-/* 
- * RÉSUMÉ : Singleton servant de "mémoire" spatiale du niveau, conservant les coordonnées d'entrée/sortie et le chemin validé pour les ennemis.
- * 
- * MÉTHODES PRINCIPALES :
- * - Awake() : Initialise l'instance unique.
- * - IsStartOrEnd() : Vérifie si des coordonnées (X,Y) correspondent au point d'apparition ou à la base.
- * - EnregistrerWaypoints() : Sauvegarde la liste finale des positions que la vague d'ennemis devra suivre.
- */
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
-    [Header("Points d'Ancrage du Niveau")]  
-    public Vector2Int startCoords = new Vector2Int(0, 4);  
-    public Vector2Int endCoords = new Vector2Int(15, 4);  
+    [Header("Configuration du Niveau")]
+    public LevelConfig currentLevel; // ON INJECTE NOTRE FICHIER ICI
+
+    // On cache les variables dans l'inspecteur car elles viennent du LevelConfig
+    [HideInInspector] public Vector2Int startCoords;  
+    [HideInInspector] public Vector2Int endCoords;  
+
+    public List<Vector3> Waypoints { get; private set; } = new List<Vector3>();
 
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            
+            // On charge les données du ScriptableObject
+            if (currentLevel != null)
+            {
+                startCoords = currentLevel.startCoords;
+                endCoords = currentLevel.endCoords;
+            }
+            else
+            {
+                Debug.LogError("[LevelManager] Aucun LevelConfig n'est assigné !");
+            }
         }
         else
         {
@@ -28,19 +37,14 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    // Fonction utilitaire pour savoir si une coordonnée correspond à un ancrage
     public bool IsStartOrEnd(Vector2Int coords)
     {
         return coords == startCoords || coords == endCoords;
     }
     
-    [Header("Données de Combat (Générées)")]
-    public System.Collections.Generic.List<Vector3> Waypoints { get; private set; } = new System.Collections.Generic.List<Vector3>();
-
-    // Fonction appelée par le Pathfinding au début de la phase d'action
-    public void EnregistrerWaypoints(System.Collections.Generic.List<Vector3> nouveauxWaypoints)
+    public void EnregistrerWaypoints(List<Vector3> nouveauxWaypoints)
     {
         Waypoints = nouveauxWaypoints;
-        Debug.Log($"[LevelManager] Phase d'Action : {Waypoints.Count} Waypoints verrouillés pour la vague !");
+        Debug.Log($"[LevelManager] Phase d'Action : {Waypoints.Count} Waypoints verrouillés !");
     }
 }

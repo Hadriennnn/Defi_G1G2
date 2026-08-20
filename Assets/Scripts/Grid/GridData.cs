@@ -1,38 +1,52 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/* 
- * RÉSUMÉ : Représentation mathématique pure de la grille de jeu, stockée dans un tableau 2D de nœuds.
- * 
- * MÉTHODES PRINCIPALES :
- * - Init() / GenerateGridData() : Crée la grille virtuelle en mémoire selon la largeur et la hauteur définies.
- * - GetNeighbors() : Retourne la liste des 4 cases adjacentes (haut, bas, gauche, droite) praticables pour un nœud donné.
- */
-
 public class GridData : MonoBehaviour
 {
     public Node[,] Grid;
 
-    [Header("Configuration de la grille")]
-    public int largeur = 16;
-    public int hauteur = 9;
+    [Header("Configuration")]
+    public LevelConfig currentLevel; // ON INJECTE LE FICHIER ICI AUSSI
     public float cellSize = 1f;
     
+    [HideInInspector] public int largeur;
+    [HideInInspector] public int hauteur;
 
     public void Init()
     {
-        GenerateGridData();
+        if (currentLevel != null)
+        {
+            largeur = currentLevel.largeur;
+            hauteur = currentLevel.hauteur;
+            GenerateGridData();
+        }
+        else
+        {
+            Debug.LogError("[GridData] Aucun LevelConfig assignÃ© !");
+        }
     }
 
     void GenerateGridData()
     {
         Grid = new Node[largeur, hauteur];
         
-        for (int x = 0; x < largeur; x++)
+        for (int y = 0; y < hauteur; y++)
         {
-            for (int y = 0; y < hauteur; y++)
+            for (int x = 0; x < largeur; x++)
             {
-                Grid[x, y] = new Node(x, y, true);
+                float nodeElevation = 0f;
+
+                // On vÃ©rifie notre tableau dans l'inspecteur pour Ã©viter les crashs
+                if (currentLevel.elevationMap != null && 
+                    y < currentLevel.elevationMap.Length && 
+                    x < currentLevel.elevationMap[y].cells.Length)
+                {
+                    // On lit la hauteur (0 ou 1) dans notre fichier de niveau
+                    nodeElevation = currentLevel.elevationMap[y].cells[x];
+                }
+
+                // On crÃ©e le noeud avec la bonne Ã©lÃ©vation
+                Grid[x, y] = new Node(x, y, true, nodeElevation);
             }
         }
     }
