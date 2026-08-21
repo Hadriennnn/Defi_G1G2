@@ -6,7 +6,6 @@ public class GridData : MonoBehaviour
     public Node[,] Grid;
 
     [Header("Configuration")]
-    public LevelConfig currentLevel; // ON INJECTE LE FICHIER ICI AUSSI
     public float cellSize = 1f;
     
     [HideInInspector] public int largeur;
@@ -14,38 +13,37 @@ public class GridData : MonoBehaviour
 
     public void Init()
     {
+        LevelConfig currentLevel = LevelManager.Instance.currentLevel;
+
         if (currentLevel != null)
         {
             largeur = currentLevel.largeur;
             hauteur = currentLevel.hauteur;
-            GenerateGridData();
+            GenerateGridData(currentLevel); 
         }
         else
         {
-            Debug.LogError("[GridData] Aucun LevelConfig assigné !");
+            Debug.LogError("[GridData] Impossible de générer la grille : LevelManager n'a pas de niveau !");
         }
     }
 
-    void GenerateGridData()
+    void GenerateGridData(LevelConfig currentLevel)
     {
         Grid = new Node[largeur, hauteur];
-        
+
         for (int y = 0; y < hauteur; y++)
         {
             for (int x = 0; x < largeur; x++)
             {
                 float nodeElevation = 0f;
 
-                // On vérifie notre tableau dans l'inspecteur pour éviter les crashs
-                if (currentLevel.elevationMap != null && 
-                    y < currentLevel.elevationMap.Length && 
+                if (currentLevel.elevationMap != null &&
+                    y < currentLevel.elevationMap.Length &&
                     x < currentLevel.elevationMap[y].cells.Length)
                 {
-                    // On lit la hauteur (0 ou 1) dans notre fichier de niveau
                     nodeElevation = currentLevel.elevationMap[y].cells[x];
                 }
 
-                // On crée le noeud avec la bonne élévation
                 Grid[x, y] = new Node(x, y, true, nodeElevation);
             }
         }

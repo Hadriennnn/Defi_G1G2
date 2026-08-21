@@ -5,29 +5,37 @@ using UnityEngine.InputSystem;
 
 public class PlacementManager : MonoBehaviour  
 {  
+    public static PlacementManager Instance { get; private set; } 
+    
     private GridData gridData;  
     private IPathfinder pathfinder; 
-    private GridVisualizer gridVisualizer; // On récupère le visualiseur pour connaître la hauteur physique
+    private GridVisualizer gridVisualizer;
 
     [Header("Configuration du Survol (Hover 3D)")]  
-    public GameObject hoverIndicator; 
+    [Tooltip("Le curseur discret affiché en temps normal.")]
+    public GameObject defaultHoverIndicator; 
+    [Tooltip("Le curseur bien visible affiché quand une carte est tenue.")]
+    public GameObject cardHoverIndicator; 
     public LayerMask groundLayer; 
-
-    [Header("Configuration des Structures")]
-    public GameObject towerPrefab; 
    
     private Dictionary<Vector2Int, GameObject> placedTowers = new Dictionary<Vector2Int, GameObject>();
-
     private Vector2Int derniereCaseSurvolee = new Vector2Int(-1, -1);
     private bool peutPlacer = true;
 
+    // --- LE LIEN AVEC LE DECK ---
+    private CardData activeCard = null;
+    public CardData debugCardToTest; // A SUPPRIMER PLUS TARD
+
     void Awake()  
     {  
+        if (Instance == null) Instance = this;       
+        else Destroy(gameObject);
+        
         gridData = GetComponent<GridData>();  
         pathfinder = GetComponent<IPathfinder>();  
         gridVisualizer = GetComponent<GridVisualizer>();
        
-        if (hoverIndicator != null) hoverIndicator.SetActive(false);
+        MasquerHover();
     }
 
     void OnEnable() { GameEvents.OnGameStateChanged += GererChangementDePhase; }
@@ -39,28 +47,60 @@ public class PlacementManager : MonoBehaviour
         else if (newState == GameState.ActionPhase)
         {
             peutPlacer = false;
-            if (hoverIndicator != null) hoverIndicator.SetActive(false);
+            DeselectCard();
+            MasquerHover();
         }
+    }
+
+    public void SelectCard(CardData card)
+    {
+        activeCard = card;
+        Debug.Log($"[PlacementManager] Carte sélectionnée : {card.nomCarte} (Coût: {card.cost})");
+    }
+
+    public void DeselectCard()
+    {
+        activeCard = null;
     }
 
     void Update()
     {
-        if (!peutPlacer) return;
-       
+        // 1. TEST DEBUG
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) 
+        {
+            SelectCard(debugCardToTest);
+        }
+
+        // 2. Si on est sur l'UI, on masque le Hover et on bloque tout
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
             MasquerHover();
             return; 
         }
-       
-        GererHover();  
 
+        // 3. On affiche toujours un Hover sur la grille (il choisira le bon tout seul)
+        GererHover();
+
+        // 4. Si on ne peut pas placer ou qu'aucune carte n'est tenue, on arrête ici
+        if (!peutPlacer || activeCard == null) 
+        {
+            return;
+        }
+
+        // 5. Clic Gauche : Tenter de jouer la carte
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)  
         {  
-            if (derniereCaseSurvolee.x != -1) PlaceBarricade();  
-        }  
+            if (derniereCaseSurvolee.x != -1) TryPlayActiveCard();  
+        }
+        
+        // 6. Clic Droit : Annuler la sélection de la carte
+        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)  
+        {  
+            DeselectCard();
+        }
     }  
 
+    // --- GESTION DU SURVOL (HOVER) ---
     void GererHover()  
     {  
         if (Mouse.current == null || Camera.main == null) return;  
@@ -71,7 +111,6 @@ public class PlacementManager : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f, groundLayer))
         {
             Vector3 origineGrille = transform.position;
-            
             float localX = hit.point.x - origineGrille.x;
             float localZ = hit.point.z - origineGrille.z; 
            
@@ -82,23 +121,26 @@ public class PlacementManager : MonoBehaviour
 
             if (gridX >= 0 && gridX < gridData.largeur && gridY >= 0 && gridY < gridData.hauteur)  
             {  
+                // On détermine quel curseur allumer et lequel éteindre
+                GameObject hoverAActiver = (activeCard != null) ? cardHoverIndicator : defaultHoverIndicator;
+                GameObject hoverADesactiver = (activeCard != null) ? defaultHoverIndicator : cardHoverIndicator;
+
                 if (caseActuelle != derniereCaseSurvolee)  
                 {  
                     derniereCaseSurvolee = caseActuelle;  
-                   
-                    if (hoverIndicator != null)
-                    {
-                        hoverIndicator.SetActive(true);
-                        
-                        // NOUVEAU : On calcule la hauteur physique exacte
-                        float hauteurPhysique = gridData.Grid[gridX, gridY].elevation * gridVisualizer.hauteurNiveau;
-                        
-                        float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
-                        float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
-                        
-                        hoverIndicator.transform.position = new Vector3(worldX, origineGrille.y + hauteurPhysique + 0.03f, worldZ);
-                    }
-                }  
+                }
+
+                // On met à jour l'affichage
+                if (hoverADesactiver != null) hoverADesactiver.SetActive(false);
+                
+                if (hoverAActiver != null)
+                {
+                    hoverAActiver.SetActive(true);
+                    float hauteurPhysique = gridData.Grid[gridX, gridY].elevation * gridVisualizer.hauteurNiveau;
+                    float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+                    float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+                    hoverAActiver.transform.position = new Vector3(worldX, origineGrille.y + hauteurPhysique + 0.03f, worldZ);
+                }
             }
             else MasquerHover();
         }
@@ -107,61 +149,91 @@ public class PlacementManager : MonoBehaviour
    
     void MasquerHover()
     {
-        if (hoverIndicator != null) hoverIndicator.SetActive(false);
+        if (defaultHoverIndicator != null) defaultHoverIndicator.SetActive(false);
+        if (cardHoverIndicator != null) cardHoverIndicator.SetActive(false);
         derniereCaseSurvolee = new Vector2Int(-1, -1);
     }
 
-    void PlaceBarricade()  
+    // JOUER LA CARTE 
+    void TryPlayActiveCard()  
     {  
         int gridX = derniereCaseSurvolee.x;  
         int gridY = derniereCaseSurvolee.y;  
+        Vector2Int inputCoords = new Vector2Int(gridX, gridY);
+        Node clickedNode = gridData.Grid[gridX, gridY];  
 
-        if (gridX >= 0 && gridX < gridData.largeur && gridY >= 0 && gridY < gridData.hauteur)  
-        {  
-            Node clickedNode = gridData.Grid[gridX, gridY];  
-            Vector2Int inputCoords = new Vector2Int(gridX, gridY);  
+        if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(inputCoords)) return; 
 
-            if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(inputCoords)) return; 
+        // CAS 1 : CARTE STRUCTURE (Tour / Barricade)
+        if (activeCard is StructureCardData structureCard)
+        {
+            if (!clickedNode.isWalkable) 
+            {
+                Debug.LogWarning("Case déjà occupée");
+                return;
+            }
 
-            clickedNode.isWalkable = !clickedNode.isWalkable;  
-
-            if (!clickedNode.isWalkable)  
+            // Pathfinding Check
+            clickedNode.isWalkable = false;  
+            if (!pathfinder.FindPath(LevelManager.Instance.startCoords, LevelManager.Instance.endCoords))  
             {  
-                bool cheminPossible = pathfinder.FindPath(LevelManager.Instance.startCoords, LevelManager.Instance.endCoords);  
+                clickedNode.isWalkable = true;  
+                pathfinder.FindPath(LevelManager.Instance.startCoords, LevelManager.Instance.endCoords);  
+                Debug.LogWarning("Placement impossible : bloque la sortie !");
+                return;  
+            }
 
-                if (!cheminPossible)  
-                {  
-                    clickedNode.isWalkable = true;  
-                    Debug.LogWarning("Placement refusé : Bloque totalement la sortie !");  
-                    pathfinder.FindPath(LevelManager.Instance.startCoords, LevelManager.Instance.endCoords);  
-                    return;  
-                }  
-                else
-                {
-                    // NOUVEAU : On applique la hauteur physique au placement de la tour
-                    float hauteurPhysique = clickedNode.elevation * gridVisualizer.hauteurNiveau;
-                    
-                    Vector3 origineGrille = transform.position;
-                    float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
-                    float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
-                    
-                    Vector3 spawnPos = new Vector3(worldX, origineGrille.y + hauteurPhysique, worldZ);
+            // Dépense d'Énergie
+            if (!EnergyManager.Instance.TrySpendEnergy(structureCard.cost))
+            {
+                clickedNode.isWalkable = true; 
+                return;
+            }
 
-                    GameObject nouvelleTour = Instantiate(towerPrefab, spawnPos, towerPrefab.transform.rotation);
-                    placedTowers.Add(inputCoords, nouvelleTour);
-                }
-            }  
-            else  
-            {  
-                if (placedTowers.ContainsKey(inputCoords))
-                {
-                    Destroy(placedTowers[inputCoords]);
-                    placedTowers.Remove(inputCoords);
-                }
-            }  
+            // Placement Physique
+            float hauteurPhysique = clickedNode.elevation * gridVisualizer.hauteurNiveau;
+            Vector3 origineGrille = transform.position;
+            float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+            float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+            Vector3 spawnPos = new Vector3(worldX, origineGrille.y + hauteurPhysique, worldZ);
 
-            GameEvents.TriggerObstacleToggled(new Vector3Int(gridX, gridY, 0), !clickedNode.isWalkable);  
-            GameEvents.TriggerGridChanged();  
-        }  
+            GameObject nouvelleTour = Instantiate(structureCard.chassisPrefab, spawnPos, structureCard.chassisPrefab.transform.rotation);
+            placedTowers.Add(inputCoords, nouvelleTour);
+
+            GameEvents.TriggerObstacleToggled(new Vector3Int(gridX, gridY, 0), true);  
+            GameEvents.TriggerGridChanged(); 
+            
+            // Défausse la carte jouée
+            DeckManager.Instance.DiscardCard(activeCard);
+            DeselectCard();
+        }
+        
+        // CAS 2 : CARTE GEMME
+        else if (activeCard is GemCardData gemCard)
+        {
+            if (!placedTowers.ContainsKey(inputCoords))
+            {
+                Debug.LogWarning("Il n'y a pas de tour sur cette case pour insérer une gemme");
+                return;
+            }
+
+            GameObject targetTower = placedTowers[inputCoords];
+            SocketManager sockets = targetTower.GetComponent<SocketManager>();
+
+            if (sockets == null || !sockets.CanInsertGem())
+            {
+                Debug.LogWarning("Cette tour n'as plus de place");
+                return;
+            }
+
+            if (!EnergyManager.Instance.TrySpendEnergy(gemCard.cost)) return;
+
+            // La Factory transforme la donnée en effet C#
+            IGemEffect gemLogic = GemFactory.CreateGemLogic(gemCard.logicType);
+            sockets.InsertGem(gemLogic);
+
+            DeckManager.Instance.DiscardCard(activeCard);
+            DeselectCard();
+        }
     }  
 }

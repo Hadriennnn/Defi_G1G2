@@ -106,6 +106,7 @@ public class Enemy : MonoBehaviour, IStatusReceiver
                 statusManager.ApplyStatus(effect);
             }
         }
+        Debug.Log($"Dégâts reçus : {payload.rawDamage} | Élément : {payload.element}");
 
         if (currentHealth <= 0) 
         {
@@ -115,7 +116,16 @@ public class Enemy : MonoBehaviour, IStatusReceiver
 
     private void Die(HitPayload fatalPayload)
     {
-        // Plus tard, c'est ici qu'on notifiera la tour instigatrice qu'elle a réussi un kill
+        if (fatalPayload != null && fatalPayload.instigator != null)
+        {
+            // On prévient la tour qu'elle a tué
+            BasicTower tower = fatalPayload.instigator.GetComponent<BasicTower>();
+            if (tower != null) 
+            {
+                tower.NotifyKill(this.gameObject);
+            }
+        }
+        
         Destroy(gameObject); 
     }
 }

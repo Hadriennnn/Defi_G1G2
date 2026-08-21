@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34b273d9791dca64f8b7f946fdd7fc92, type: 3}
+  m_Name: Card_Struct_Gatling
+  m_EditorClassIdentifier: Assembly-CSharp::StructureCardData
+  idCarte: Gatling_01
+  nomCarte: Tour Gatling
+  description: Tour de base
+  cost: 2
+  icon: {fileID: 0}
+  chassisPrefab: {fileID: 1996272947337713647, guid: 5763922056b25fd4cb73fd60007ed5b4, type: 3}

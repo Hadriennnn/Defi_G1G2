@@ -1,20 +1,21 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/* 
- * RÉSUMÉ : Le Cerveau de la tour. Il gère uniquement la détection (mathématique) et le déclenchement des tirs.
- */
+
 public class BasicTower : MonoBehaviour
 {
-    [Header("Paramètres de Tir")]
+    [Header("Paramètres de Tir de Base")]
     [SerializeField] private float baseRange = 5f;
     [SerializeField] private float baseFireRate = 1f; 
     [SerializeField] private float initialDamage = 25f;
-    public Vector3 centerOffset = new Vector3(0f, 1f, 0f);
-    
+
+    // Nos Stats dynamiques de la Phase 1
     public Stat Range;
     public Stat FireRate;
     public Stat Damage;
+
+    public Vector3 centerOffset = new Vector3(0f, 1f, 0f);
 
     [Header("Références (Logique)")]
     public GameObject projectilePrefab;
@@ -23,10 +24,19 @@ public class BasicTower : MonoBehaviour
 
     private float fireCountdown = 0f;
     private Transform currentTarget;
+
     
+    // Se déclenche juste avant le tir. Permet à la gemme de rajouter les effets.
+    public event Action<HitPayload> OnBeforeShoot; 
+    
+    // Se déclenche au moment précis où le coup part (jvais mettre effet visu etc .
+    public event Action OnShoot; 
+    
+    // Se déclenche si le monstre meurt des suites de cette attaque pour tout ce qui est gemme onkill.
+    public event Action<GameObject> OnTargetKilled;
+
     void Awake()
     {
-        // On initialise nos stats avec les valeurs de l'inspecteur
         Range = new Stat(baseRange);
         FireRate = new Stat(baseFireRate);
         Damage = new Stat(initialDamage);
@@ -34,26 +44,23 @@ public class BasicTower : MonoBehaviour
 
     void Update()
     {
-        // On ne fait rien si on est en phase de préparation
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.PreparationPhase) return;
 
         fireCountdown -= Time.deltaTime;
         
-        // Le cerveau cherche sa cible
         UpdateTarget();
 
-        // S'il a une cible et que le canon est prêt, il tire
         if (currentTarget != null && fireCountdown <= 0f)
         {
             Shoot();
-            fireCountdown = 1f / FireRate.Value;
+            fireCountdown = 1f / FireRate.Value; 
         }
     }
 
     void UpdateTarget()
     {
         Vector3 trueCenter = transform.position + centerOffset;
-        Collider[] enemiesInRange = Physics.OverlapSphere(trueCenter, Range.Value, enemyLayer); // Utilisation native de la détection[cite: 1]
+        Collider[] enemiesInRange = Physics.OverlapSphere(trueCenter, Range.Value, enemyLayer);
         
         float shortestDistance = Mathf.Infinity;
         Transform nearestEnemy = null;
@@ -72,32 +79,44 @@ public class BasicTower : MonoBehaviour
 
     void Shoot()
     {
+        //On crée le colis avec les valeurs de base
         HitPayload payload = new HitPayload 
         { 
-            rawDamage = Damage.Value, // On utilise bien ta Stat dynamique
+            rawDamage = Damage.Value,
             element = ElementType.Normal,
             instigator = this.gameObject,
-            effectsToApply = new List<StatusEffect>() // La liste est prête !
+            effectsToApply = new List<StatusEffect>()
         };
         
-        // Plus tard, ici, les Gemmes insérées feront : payload.effectsToApply.Add(new BurnEffect(...));
-
+        // Les gemmes vont modifier le colis avec ce qu'elles ont dedans
+        OnBeforeShoot?.Invoke(payload);
+        
+        //On lance le proj avec le colis
         GameObject projGO = PoolManager.Instance.Spawn(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectile = projGO.GetComponent<Projectile>();
         
         if (projectile != null) projectile.Fire(currentTarget, payload);
+
+        //On notifie que le tir est parti
+        OnShoot?.Invoke();
     }
 
-    // NOUVEAU : Le moyen de communication pour les autres scripts (les "Muscles")
+    //L'ennemi appellera cette méthode quand il mourra
+    public void NotifyKill(GameObject victim)
+    {
+        OnTargetKilled?.Invoke(victim);
+    }
+
     public Transform GetCurrentTarget()
     {
         return currentTarget;
     }
 
+    // Pour voir la range dans le mode éditeur, je ferai un truc plus propre et visible in game après 
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Vector3 trueCenter = transform.position + centerOffset;
-        Gizmos.DrawWireSphere(trueCenter, Range.Value);
+        Gizmos.DrawWireSphere(trueCenter, Range != null ? Range.baseValue : baseRange);
     }
 }

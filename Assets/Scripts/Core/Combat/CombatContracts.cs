@@ -11,7 +11,7 @@ public enum ElementType
 }
 
 // 2. Le "colis" de dégâts enrichi
-public struct HitPayload
+public class HitPayload
 {
     public float rawDamage;
     public ElementType element;

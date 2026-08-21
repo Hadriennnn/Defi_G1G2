@@ -120,6 +120,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7035a7e583c4f9147aeee27bd3eea805, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3525583889181607281}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7035a7e583c4f9147aeee27bd3eea805, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 795218632317898072}
   m_SourcePrefab: {fileID: 100100000, guid: 7035a7e583c4f9147aeee27bd3eea805, type: 3}
 --- !u!1 &1996272947337713647 stripped
 GameObject:
@@ -141,13 +144,13 @@ MonoBehaviour:
   baseRange: 5
   baseFireRate: 1
   initialDamage: 5
-  centerOffset: {x: 0, y: 0, z: 0}
   Range:
     baseValue: 0
   FireRate:
     baseValue: 0
   Damage:
     baseValue: 0
+  centerOffset: {x: 0, y: 0, z: 0}
   projectilePrefab: {fileID: 7270111578509950965, guid: e01a84c0212a6ef468a53ae4749d78b0, type: 3}
   firePoint: {fileID: 4956845576483385995}
   enemyLayer:
@@ -167,6 +170,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TurretRotatorY
   turnSpeed: 5
   turretHead: {fileID: 2983128332043045040}
+--- !u!114 &795218632317898072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996272947337713647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f3a4f4824b44b73b9f9c9c989a26173, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SocketManager
+  maxSockets: 3
 --- !u!4 &2983128332043045040 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4473047581488849422, guid: 7035a7e583c4f9147aeee27bd3eea805, type: 3}
