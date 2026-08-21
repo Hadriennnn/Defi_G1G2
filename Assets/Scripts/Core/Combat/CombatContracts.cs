@@ -1,13 +1,28 @@
 using UnityEngine;
+using System.Collections.Generic;
 
-// Le colis qui voyagera dans le projectile. 
+// 1. On définit tous les éléments possibles du jeu
+public enum ElementType
+{
+    Normal,
+    Glace,
+    Feu,
+    Foudre
+}
+
+// 2. Le "colis" de dégâts enrichi
 public struct HitPayload
 {
     public float rawDamage;
-    // Plus tard, on ajoutera ici : public StatusEffectData[] statusEffects;
+    public ElementType element;
+    
+    // La tour qui a généré ce tir. Indispensable pour que la tour sache si elle a tué l'ennemi.
+    public GameObject instigator; 
+    
+    public List<StatusEffect> effectsToApply; 
 }
 
-// Le contrat : tout élément du jeu qui peut subir des dégâts doit implémenter ceci.
+// 3. Le contrat reste le même, mais il recevra ce nouveau colis
 public interface IStatusReceiver
 {
     void ReceivePayload(HitPayload payload);

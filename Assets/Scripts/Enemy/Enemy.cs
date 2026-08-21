@@ -1,29 +1,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/* 
- * RÉSUMÉ : Contrôle l'adversaire (mouvement fluide sans collision physique, avec système de voies).
- */
+
 public class Enemy : MonoBehaviour, IStatusReceiver
 {
     [Header("Déplacement")]
-    public float speed = 3f;
+    // La vitesse devient une Stat dynamique les ralentissements
+    public Stat speed = new Stat(3f); 
     public float maxOffset = 0.3f; 
     
     [Header("Combat")]
-    public float maxHealth = 100f;
+    public Stat maxHealth = new Stat(100f);
+    public Stat armor = new Stat(5f);
+    
     private float currentHealth;
     
     private List<Vector3> waypoints = new List<Vector3>();
     private int currentWaypointIndex = 0;
     
     private Vector3 personalOffset;
+    private EnemyStatusManager statusManager;
 
     void Awake()
     {
-        currentHealth = maxHealth;
+        currentHealth = maxHealth.Value;
+        
+        // On lie le gestionnaire de statuts
+        statusManager = GetComponent<EnemyStatusManager>();
 
-        // Génération du décalage
+        // Génération du décalage pour éviter la file indienne
         float randomX = Random.Range(-maxOffset, maxOffset);
         float randomZ = Random.Range(-maxOffset, maxOffset);
         personalOffset = new Vector3(randomX, 0f, randomZ); 
@@ -40,7 +45,6 @@ public class Enemy : MonoBehaviour, IStatusReceiver
 
         if (waypoints != null && waypoints.Count > 0)
         {
-            // Il apparait sur le waypoint + son décalage
             transform.position = waypoints[0] + personalOffset; 
         }
     }
@@ -49,7 +53,6 @@ public class Enemy : MonoBehaviour, IStatusReceiver
     {
         GameEvents.TriggerEnemyRemoved();
     }
-
     
     void Update()
     {
@@ -57,20 +60,18 @@ public class Enemy : MonoBehaviour, IStatusReceiver
             return;
 
         Vector3 targetPosition = waypoints[currentWaypointIndex] + personalOffset;
-        
-        
         targetPosition.y = transform.position.y;
         
         Vector3 direction = targetPosition - transform.position;
         
         if (direction != Vector3.zero)
         {
-            // Quaternion.Slerp permet à l'ennemi de tourner sur lui-même en douceur dans les virages
             Quaternion toRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, 10f * Time.deltaTime); 
         }
         
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
+        // On utilise speed.Value pour appliquer les potentiels ralentissements
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed.Value * Time.deltaTime);
         
         Vector2 currentPos2D = new Vector2(transform.position.x, transform.position.z);
         Vector2 targetPos2D = new Vector2(targetPosition.x, targetPosition.z);
@@ -92,12 +93,29 @@ public class Enemy : MonoBehaviour, IStatusReceiver
     
     public void ReceivePayload(HitPayload payload)
     {
-        currentHealth -= payload.rawDamage;
-        if (currentHealth <= 0) Die(); 
+        // Calcul des dégâts avec armure fixe
+        float finalDamage = Mathf.Max(1f, payload.rawDamage - armor.Value);
+        
+        currentHealth -= finalDamage;
+
+        // Application des altérations d'état
+        if (payload.effectsToApply != null && statusManager != null)
+        {
+            foreach (StatusEffect effect in payload.effectsToApply)
+            {
+                statusManager.ApplyStatus(effect);
+            }
+        }
+
+        if (currentHealth <= 0) 
+        {
+            Die(payload); 
+        }
     }
 
-    private void Die()
+    private void Die(HitPayload fatalPayload)
     {
+        // Plus tard, c'est ici qu'on notifiera la tour instigatrice qu'elle a réussi un kill
         Destroy(gameObject); 
     }
 }

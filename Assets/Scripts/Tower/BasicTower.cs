@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /* 
@@ -6,10 +7,14 @@ using UnityEngine;
 public class BasicTower : MonoBehaviour
 {
     [Header("Paramètres de Tir")]
-    public float range = 5f;
-    public float fireRate = 1f; 
-    public float baseDamage = 25f;
+    [SerializeField] private float baseRange = 5f;
+    [SerializeField] private float baseFireRate = 1f; 
+    [SerializeField] private float initialDamage = 25f;
     public Vector3 centerOffset = new Vector3(0f, 1f, 0f);
+    
+    public Stat Range;
+    public Stat FireRate;
+    public Stat Damage;
 
     [Header("Références (Logique)")]
     public GameObject projectilePrefab;
@@ -18,6 +23,14 @@ public class BasicTower : MonoBehaviour
 
     private float fireCountdown = 0f;
     private Transform currentTarget;
+    
+    void Awake()
+    {
+        // On initialise nos stats avec les valeurs de l'inspecteur
+        Range = new Stat(baseRange);
+        FireRate = new Stat(baseFireRate);
+        Damage = new Stat(initialDamage);
+    }
 
     void Update()
     {
@@ -33,14 +46,14 @@ public class BasicTower : MonoBehaviour
         if (currentTarget != null && fireCountdown <= 0f)
         {
             Shoot();
-            fireCountdown = 1f / fireRate;
+            fireCountdown = 1f / FireRate.Value;
         }
     }
 
     void UpdateTarget()
     {
         Vector3 trueCenter = transform.position + centerOffset;
-        Collider[] enemiesInRange = Physics.OverlapSphere(trueCenter, range, enemyLayer); // Utilisation native de la détection[cite: 1]
+        Collider[] enemiesInRange = Physics.OverlapSphere(trueCenter, Range.Value, enemyLayer); // Utilisation native de la détection[cite: 1]
         
         float shortestDistance = Mathf.Infinity;
         Transform nearestEnemy = null;
@@ -59,9 +72,16 @@ public class BasicTower : MonoBehaviour
 
     void Shoot()
     {
-        HitPayload payload = new HitPayload { rawDamage = baseDamage }; // Le contrat de dégâts reste intact[cite: 1]
+        HitPayload payload = new HitPayload 
+        { 
+            rawDamage = Damage.Value, // On utilise bien ta Stat dynamique
+            element = ElementType.Normal,
+            instigator = this.gameObject,
+            effectsToApply = new List<StatusEffect>() // La liste est prête !
+        };
         
-        // On utilise notre PoolManager
+        // Plus tard, ici, les Gemmes insérées feront : payload.effectsToApply.Add(new BurnEffect(...));
+
         GameObject projGO = PoolManager.Instance.Spawn(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectile = projGO.GetComponent<Projectile>();
         
@@ -78,6 +98,6 @@ public class BasicTower : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Vector3 trueCenter = transform.position + centerOffset;
-        Gizmos.DrawWireSphere(trueCenter, range);
+        Gizmos.DrawWireSphere(trueCenter, Range.Value);
     }
 }

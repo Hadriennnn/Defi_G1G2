@@ -228,9 +228,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ddd934f442f256e4882e3c9345ad88d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  speed: 2
-  maxOffset: 0.3
-  maxHealth: 20
+  speed:
+    baseValue: 2
+  maxOffset: 0.2
+  maxHealth:
+    baseValue: 20
+  armor:
+    baseValue: 1
 --- !u!136 &5747788251707318240
 CapsuleCollider:
   m_ObjectHideFlags: 0
