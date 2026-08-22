@@ -9,13 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7dfac72862e630249bb460e2bc7afed9, type: 3}
-  m_Name: Surcharge
-  m_EditorClassIdentifier: Assembly-CSharp::SpellCardData
-  idCarte: Surcharge_01
-  nomCarte: Surcharge
-  description: Applique surcharge
-  cost: 1
+  m_Script: {fileID: 0}
+  m_Name: Spell_OndeStase
+  m_EditorClassIdentifier: Assembly-CSharp::SpellCard_OndeDeStase
+  idCarte: OndeStase_01
+  nomCarte: Onde Stase
+  description: "G\xE8le les ennemies dans la zone indiqu\xE9"
+  cost: 2
   icon: {fileID: 0}
-  spellType: 1
   requiresTargeting: 0

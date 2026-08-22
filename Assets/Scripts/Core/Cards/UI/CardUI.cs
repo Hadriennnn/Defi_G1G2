@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using TMPro; 
 using UnityEngine.EventSystems; 
 
-
 public class CardUI : MonoBehaviour, IPointerClickHandler
 {
     [Header("Composants Visuels")]
@@ -13,7 +12,6 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     public Image cardIcon; 
     
     public CardData CardDataAsset { get; private set; }
-
    
     private CardData myData;
 
@@ -21,7 +19,6 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     {
         myData = data;
         CardDataAsset = data;
-        
         
         if (nameText != null) nameText.text = data.nomCarte;
         if (costText != null) costText.text = data.cost.ToString();
@@ -33,10 +30,9 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
         }
     }
 
-   // On annonce qu'on veut jouer cette carte 
     public void OnPointerClick(PointerEventData eventData)
     {
         if (myData == null) return;
-        PlacementManager.Instance.SelectCard(myData);
+        GameEvents.TriggerCardSelected(myData);
     }
 }

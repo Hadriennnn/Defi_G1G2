@@ -1,16 +1,11 @@
 using UnityEngine;
 
 
-public enum GemLogicType
+public abstract class GemCardData : CardData
 {
-    AttaqueRapide,
-    NoyauIgnifere,
-    // On ajoutera les autres ici au fur et à mesure (Sniper, OndePolaire, etc.)
-}
+    
+    [Tooltip("Cette méthode sera définie par chaque gemme spécifique.")]
 
-[CreateAssetMenu(fileName = "NewGemCard", menuName = "TowerDefense/Cards/Gem")]
-public class GemCardData : CardData
-{
-    [Header("Données de Gemme")]
-    public GemLogicType logicType; 
+    // On est obligé de créer l'effet de la gemme 
+    public abstract IGemEffect CreateGemEffect(); 
 }

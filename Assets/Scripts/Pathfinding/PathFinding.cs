@@ -1,22 +1,20 @@
 using System.Collections.Generic;  
 using UnityEngine;
 
-/* 
- * RÉSUMÉ : Algorithme (A*) qui trouve le chemin le plus court sur la grille et le convertit en coordonnées.
- * 
- * MÉTHODES PRINCIPALES :
- * - InitializePathGrid() : Pré-alloue les nœuds spécifiques à l'algorithme (PathNode) pour optimiser la mémoire.
- * - FindPath() / GetNeighbors() / GetDistance() : Méthodes centrales de l'A* qui évaluent le coût des déplacements de case en case.
- * - RetracePath() : Remonte de parent en parent pour créer la liste du chemin final.
- * - GererChangementPhase() : Convertit les cases X/Y en Vector3 réels quand la vague démarre.
- */
-
 public class Pathfinding : MonoBehaviour , IPathfinder
 {  
    private GridData gridData;  
-   private PathNode[,] pathGrid; // Grille de calcul isolée
+   private PathNode[,] pathGrid; 
    
    private List<Node> dernierCheminValide = new List<Node>();
+
+   // OPTIMISATION : Mise en cache des directions et de la liste des voisins
+   private readonly Vector2Int[] directions = new Vector2Int[]  
+   {  
+       new Vector2Int(0, 1), new Vector2Int(0, -1),  
+       new Vector2Int(1, 0), new Vector2Int(-1, 0)  
+   };
+   private List<PathNode> cachedNeighbors = new List<PathNode>(4);
 
    public void Init()  
    {  
@@ -46,7 +44,6 @@ public class Pathfinding : MonoBehaviour , IPathfinder
        }
    }
 
-   // On pré-alloue tous les PathNodes UNE SEULE FOIS pour éviter le Garbage Collector
    private void InitializePathGrid()  
    {  
        pathGrid = new PathNode[gridData.largeur, gridData.hauteur];  
@@ -61,16 +58,15 @@ public class Pathfinding : MonoBehaviour , IPathfinder
 
    public bool FindPath(Vector2Int startPos, Vector2Int targetPos)  
    {  
-       // 1. RÉINITIALISATION COMPLÈTE de notre grille de calcul
        for (int x = 0; x < gridData.largeur; x++)  
        {  
            for (int y = 0; y < gridData.hauteur; y++)  
            {  
                PathNode node = pathGrid[x, y];  
                node.parent = null;  
-               node.gCost = int.MaxValue; // On commence à l'infini pour l'A*
+               node.gCost = int.MaxValue; 
                node.hCost = 0;  
-               node.HeapIndex = -1; // Indique qu'il n'est pas dans le Heap
+               node.HeapIndex = -1; 
            }  
        }  
 
@@ -96,9 +92,14 @@ public class Pathfinding : MonoBehaviour , IPathfinder
                return true;  
            }  
 
-           foreach (PathNode neighbor in GetNeighbors(currentNode))  
+           // NON-ALLOC : On remplit la liste mise en cache au lieu d'en créer une nouvelle
+           GetNeighborsNonAlloc(currentNode, cachedNeighbors);
+
+           // On utilise une boucle for classique (légèrement plus opti qu'un foreach sur certaines versions d'Unity)
+           for (int i = 0; i < cachedNeighbors.Count; i++)
            {  
-               // On lit le "isWalkable" depuis la vraie grille GridData sous-jacente et on vérifie l'élévation
+               PathNode neighbor = cachedNeighbors[i];
+
                if (!neighbor.GridNode.isWalkable || neighbor.GridNode.elevation > 0f || closedSet.Contains(neighbor))
                {  
                    continue;  
@@ -126,31 +127,25 @@ public class Pathfinding : MonoBehaviour , IPathfinder
        return false;  
    }  
 
-   private List<PathNode> GetNeighbors(PathNode node)  
+   // OPTIMISATION : Ne retourne plus rien, modifie la liste passée en paramètre
+   private void GetNeighborsNonAlloc(PathNode node, List<PathNode> results)  
    {  
-       List<PathNode> neighbors = new List<PathNode>();  
-       Vector2Int[] directions = new Vector2Int[]  
+       results.Clear(); // On vide la liste de la boucle précédente
+       
+       for (int i = 0; i < directions.Length; i++)  
        {  
-           new Vector2Int(0, 1), new Vector2Int(0, -1),  
-           new Vector2Int(1, 0), new Vector2Int(-1, 0)  
-       };  
-
-       foreach (Vector2Int dir in directions)  
-       {  
-           int checkX = node.GridNode.gridX + dir.x;  
-           int checkY = node.GridNode.gridY + dir.y;  
+           int checkX = node.GridNode.gridX + directions[i].x;  
+           int checkY = node.GridNode.gridY + directions[i].y;  
 
            if (checkX >= 0 && checkX < gridData.largeur && checkY >= 0 && checkY < gridData.hauteur)  
            {  
-               neighbors.Add(pathGrid[checkX, checkY]);  
+               results.Add(pathGrid[checkX, checkY]);  
            }  
        }  
-       return neighbors;  
    }  
 
    void RetracePath(PathNode startNode, PathNode endNode)  
    {  
-       // On reconstruit une liste de "Node" purs pour ne pas casser ton GridVisualizer !
        List<Node> path = new List<Node>();  
        PathNode currentNode = endNode;  
 
@@ -181,12 +176,9 @@ public class Pathfinding : MonoBehaviour , IPathfinder
 
            foreach (Node n in dernierCheminValide)
            {
-               // CORRECTION 3D : On convertit gridX en X, et gridY en axe Z (profondeur)
                float worldX = origineGrille.x + (n.gridX * gridData.cellSize) + (gridData.cellSize / 2f);
                float worldZ = origineGrille.z + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
                
-               // On surélève le point (Y = +0.5f) pour que le centre de l'ennemi soit au-dessus du sol
-               // (Tu pourras ajuster ce 0.5f en fonction de la taille de ton modèle Blender)
                waypointsFinaux.Add(new Vector3(worldX, origineGrille.y + 0.5f, worldZ));
            }
 
@@ -196,18 +188,11 @@ public class Pathfinding : MonoBehaviour , IPathfinder
            }
        }
    }
-   
-   
 }
-
-
-
-
-
 
 public class PathNode : IHeapItem<PathNode>  
 {  
-   public Node GridNode { get; private set; } // Référence vers le nœud de données pur
+   public Node GridNode { get; private set; } 
    public int gCost;  
    public int hCost;  
    public int fCost => gCost + hCost;  
@@ -235,6 +220,4 @@ public class PathNode : IHeapItem<PathNode>
        }  
        return -compare;  
    }
-
-   
 }

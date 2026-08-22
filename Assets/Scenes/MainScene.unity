@@ -201,15 +201,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeckManager
   startingDeck:
-  - {fileID: 11400000, guid: 57b4581d24802ae49ac44f595c025601, type: 2}
-  - {fileID: 11400000, guid: 57b4581d24802ae49ac44f595c025601, type: 2}
-  - {fileID: 11400000, guid: 57b4581d24802ae49ac44f595c025601, type: 2}
-  - {fileID: 11400000, guid: 29d36b341a7c7a44894de2a2cf07849e, type: 2}
-  - {fileID: 11400000, guid: 29d36b341a7c7a44894de2a2cf07849e, type: 2}
-  - {fileID: 11400000, guid: 29d36b341a7c7a44894de2a2cf07849e, type: 2}
-  - {fileID: 11400000, guid: 7f057fab7b2fbce479768333418de3dc, type: 2}
-  - {fileID: 11400000, guid: 7f057fab7b2fbce479768333418de3dc, type: 2}
-  - {fileID: 11400000, guid: 7f057fab7b2fbce479768333418de3dc, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: 0e2a5f861237f364685412b1687d4eae, type: 2}
+  - {fileID: 11400000, guid: 5f58de1776f1d4b4a89940c1af5cbc38, type: 2}
+  - {fileID: 11400000, guid: 5f58de1776f1d4b4a89940c1af5cbc38, type: 2}
+  - {fileID: 11400000, guid: 0e2a5f861237f364685412b1687d4eae, type: 2}
+  - {fileID: 11400000, guid: 0e2a5f861237f364685412b1687d4eae, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: c09360a50640d8f4f9c98827a86450ef, type: 2}
+  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
@@ -445,10 +445,10 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 4
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildAlignment: 3
+  m_Spacing: 10
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0

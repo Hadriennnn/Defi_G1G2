@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class Enemy : MonoBehaviour, IStatusReceiver
 {
     [Header("Déplacement")]
-    // La vitesse devient une Stat dynamique les ralentissements
     public Stat speed = new Stat(3f); 
     public float maxOffset = 0.3f; 
     
@@ -21,14 +19,14 @@ public class Enemy : MonoBehaviour, IStatusReceiver
     private Vector3 personalOffset;
     private EnemyStatusManager statusManager;
 
+    // Corrige le bug où quand 2 tours tuent la cible en même temps on a 2 kills comptabilisés
+    private bool isDead = false;
+
     void Awake()
     {
         currentHealth = maxHealth.Value;
-        
-        // On lie le gestionnaire de statuts
         statusManager = GetComponent<EnemyStatusManager>();
 
-        // Génération du décalage pour éviter la file indienne
         float randomX = Random.Range(-maxOffset, maxOffset);
         float randomZ = Random.Range(-maxOffset, maxOffset);
         personalOffset = new Vector3(randomX, 0f, randomZ); 
@@ -56,7 +54,8 @@ public class Enemy : MonoBehaviour, IStatusReceiver
     
     void Update()
     {
-        if (waypoints == null || waypoints.Count == 0 || currentWaypointIndex >= waypoints.Count)
+        // Si l'ennemi est mort, on arrête de le faire avancer
+        if (isDead || waypoints == null || waypoints.Count == 0 || currentWaypointIndex >= waypoints.Count)
             return;
 
         Vector3 targetPosition = waypoints[currentWaypointIndex] + personalOffset;
@@ -70,7 +69,6 @@ public class Enemy : MonoBehaviour, IStatusReceiver
             transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, 10f * Time.deltaTime); 
         }
         
-        // On utilise speed.Value pour appliquer les potentiels ralentissements
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed.Value * Time.deltaTime);
         
         Vector2 currentPos2D = new Vector2(transform.position.x, transform.position.z);
@@ -88,17 +86,21 @@ public class Enemy : MonoBehaviour, IStatusReceiver
 
     private void AtteindreObjectif()
     {
+        if (isDead) return;
+        isDead = true;
+        
+        // Ici tu pourras ajouter : GameManager.Instance.PerdreDesVies(1);
         Destroy(gameObject); 
     }
     
     public void ReceivePayload(HitPayload payload)
     {
-        // Calcul des dégâts avec armure fixe
+        // Si l'ennemi est déjà mort on ignore le projectile
+        if (isDead) return;
+
         float finalDamage = Mathf.Max(1f, payload.rawDamage - armor.Value);
-        
         currentHealth -= finalDamage;
 
-        // Application des altérations d'état
         if (payload.effectsToApply != null && statusManager != null)
         {
             foreach (StatusEffect effect in payload.effectsToApply)
@@ -106,19 +108,23 @@ public class Enemy : MonoBehaviour, IStatusReceiver
                 statusManager.ApplyStatus(effect);
             }
         }
+        
         Debug.Log($"Dégâts reçus : {payload.rawDamage} | Élément : {payload.element}");
 
         if (currentHealth <= 0) 
         {
+            isDead = true;
             Die(payload); 
         }
     }
 
     private void Die(HitPayload fatalPayload)
     {
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
         if (fatalPayload != null && fatalPayload.instigator != null)
         {
-            // On prévient la tour qu'elle a tué
             BasicTower tower = fatalPayload.instigator.GetComponent<BasicTower>();
             if (tower != null) 
             {

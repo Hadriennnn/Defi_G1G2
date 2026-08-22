@@ -86,5 +86,6 @@ public class EnergyManager : MonoBehaviour
     {
         int maxEnergy = baseEnergyPerWave + bonusEnergyPerWave;
         OnEnergyChanged?.Invoke(currentEnergy, maxEnergy);
+        Debug.Log("[EnergyManager] Energie actuele : " + currentEnergy);
     }
 }

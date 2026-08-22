@@ -38,8 +38,17 @@ public class PlacementManager : MonoBehaviour
         MasquerHover();
     }
 
-    void OnEnable() { GameEvents.OnGameStateChanged += GererChangementDePhase; }
-    void OnDisable() { GameEvents.OnGameStateChanged -= GererChangementDePhase; }
+    void OnEnable() 
+    { 
+        GameEvents.OnGameStateChanged += GererChangementDePhase;
+        GameEvents.OnCardSelected += SelectCard;
+    }
+    
+    void OnDisable() 
+    { 
+        GameEvents.OnGameStateChanged -= GererChangementDePhase;
+        GameEvents.OnCardSelected -= SelectCard;
+    }
 
     private void GererChangementDePhase(GameState newState)
     {
@@ -52,15 +61,16 @@ public class PlacementManager : MonoBehaviour
         }
     }
 
-    public void SelectCard(CardData card)
+    private void SelectCard(CardData card)
     {
         activeCard = card;
         Debug.Log($"[PlacementManager] Carte sélectionnée : {card.nomCarte} (Coût: {card.cost})");
     }
 
-    public void DeselectCard()
+    private void DeselectCard()
     {
         activeCard = null;
+        GameEvents.TriggerCardDeselected(); // On prévient le jeu (utile si l'UI veut retirer une surbrillance plus tard)
     }
 
     void Update()
@@ -222,18 +232,78 @@ public class PlacementManager : MonoBehaviour
 
             if (sockets == null || !sockets.CanInsertGem())
             {
-                Debug.LogWarning("Cette tour n'as plus de place");
+                Debug.LogWarning("Cette tour n'a plus de place");
                 return;
             }
 
             if (!EnergyManager.Instance.TrySpendEnergy(gemCard.cost)) return;
-
-            // La Factory transforme la donnée en effet C#
-            IGemEffect gemLogic = GemFactory.CreateGemLogic(gemCard.logicType);
+            
+            IGemEffect gemLogic = gemCard.CreateGemEffect();
+            
             sockets.InsertGem(gemLogic);
 
             DeckManager.Instance.DiscardCard(activeCard);
             DeselectCard();
         }
+        
+        // CAS 3 : CARTE SORT (SPELL)
+        else if (activeCard is SpellCardData spellCard)
+        {
+            // Si le sort nécessite une cible mais qu'on clique hors de la grille, on annule
+            if (spellCard.requiresTargeting && !clickedNode.isWalkable && !placedTowers.ContainsKey(inputCoords)) 
+            {
+                // Note : Tu pourras affiner cette condition selon si tes sorts ciblent le chemin ou les tours
+            }
+
+            if (!EnergyManager.Instance.TrySpendEnergy(spellCard.cost)) return;
+
+            // Calcul de la position 3D du clic
+            Vector3 origineGrille = transform.position;
+            float worldX = origineGrille.x + (gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+            float worldZ = origineGrille.z + (gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+            Vector3 targetPos = new Vector3(worldX, origineGrille.y, worldZ);
+
+            // Polymorphisme : On exécute le sort !
+            ISpellEffect spellLogic = spellCard.CreateSpellEffect();
+            spellLogic.Execute(targetPos);
+
+            DeckManager.Instance.DiscardCard(activeCard);
+            DeselectCard();
+        }
+
+        // CAS 4 : CARTE MODIFICATEUR
+        else if (activeCard is ModifierCardData modCard)
+        {
+            GameObject targetTower = null;
+
+            if (modCard.requiresTowerTarget)
+            {
+                if (!placedTowers.ContainsKey(inputCoords))
+                {
+                    Debug.LogWarning("Ce modificateur nécessite de cibler une tour !");
+                    return;
+                }
+                targetTower = placedTowers[inputCoords];
+            }
+
+            if (!EnergyManager.Instance.TrySpendEnergy(modCard.cost)) return;
+
+            // Polymorphisme : On exécute le modificateur !
+            IModifierEffect modLogic = modCard.CreateModifierEffect();
+            modLogic.Execute(targetTower);
+
+            // Si la tour a été détruite par le modificateur (ex: Recyclage), on la retire du dictionnaire
+            if (targetTower == null || !targetTower.activeInHierarchy)
+            {
+                placedTowers.Remove(inputCoords);
+                clickedNode.isWalkable = true;
+                GameEvents.TriggerObstacleToggled(new Vector3Int(gridX, gridY, 0), false);
+                GameEvents.TriggerGridChanged();
+            }
+
+            DeckManager.Instance.DiscardCard(activeCard);
+            DeselectCard();
+        }
+        
     }  
 }

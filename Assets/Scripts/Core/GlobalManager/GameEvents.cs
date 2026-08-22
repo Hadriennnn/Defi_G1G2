@@ -18,6 +18,15 @@ public static class GameEvents
     public static event Action<Vector3Int, bool> OnObstacleToggled;
     public static event Action<GameState> OnGameStateChanged;
     public static void TriggerGameStateChanged(GameState newState) => OnGameStateChanged?.Invoke(newState);
+    
+    // Événement quand le joueur clique sur une carte dans sa main (clique gauche)
+    public static event Action<CardData> OnCardSelected;
+    public static void TriggerCardSelected(CardData card) => OnCardSelected?.Invoke(card);
+    
+    // Événement quand le joueur annule sa sélection (clic droit)
+    public static event Action OnCardDeselected;
+    public static void TriggerCardDeselected() => OnCardDeselected?.Invoke();
+    
 
     public static void TriggerGridChanged() => OnGridChanged?.Invoke();  
 

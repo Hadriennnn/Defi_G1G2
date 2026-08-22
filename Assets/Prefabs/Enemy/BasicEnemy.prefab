@@ -189,11 +189,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8393206772795387016}
-  - component: {fileID: 2471160128883364006}
+  - component: {fileID: 7510640089727511625}
+  - component: {fileID: 3599309620168143763}
   - component: {fileID: 5747788251707318240}
   - component: {fileID: 8901308826647413487}
+  - component: {fileID: 873559920988818115}
   m_Layer: 6
-  m_Name: Monster
+  m_Name: BasicEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -216,7 +218,7 @@ Transform:
   - {fileID: 1784210795652103357}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2471160128883364006
+--- !u!114 &7510640089727511625
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -225,16 +227,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 4963533562085925753}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ddd934f442f256e4882e3c9345ad88d1, type: 3}
+  m_Script: {fileID: 11500000, guid: d2ed9b2af417f7149b7462de3ffea3ec, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  speed:
-    baseValue: 2
-  maxOffset: 0.2
-  maxHealth:
-    baseValue: 20
-  armor:
-    baseValue: 1
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCore
+  data: {fileID: 11400000, guid: 359457beb19371b49898365ba1fbc6bd, type: 2}
+--- !u!114 &3599309620168143763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4963533562085925753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e08c504431f8cc4d9006485fc8d7b58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovement
+  maxOffset: 0.3
 --- !u!136 &5747788251707318240
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -285,3 +294,15 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &873559920988818115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4963533562085925753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c2e674b00582704288046b77d514387, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStatusManager
