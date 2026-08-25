@@ -1,50 +1,41 @@
 using UnityEngine;
-using System.Collections.Generic; // N'oublie pas l'import pour la List
+using System.Collections.Generic; 
 
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
-    [Header("Configuration du Niveau")]
-    public LevelConfig currentLevel; // ON INJECTE NOTRE FICHIER ICI
+    public List<Vector2Int> spawnPoints => ChunkManager.Instance.activeSpawns;  
 
-    // On cache les variables dans l'inspecteur car elles viennent du LevelConfig
-    [HideInInspector] public Vector2Int startCoords;  
-    [HideInInspector] public Vector2Int endCoords;  
+    public List<Vector2Int> GetBaseCoords()
+    {
+        Vector2Int root = ChunkManager.Instance.baseNoyauCoords;
+        return new List<Vector2Int>
+        {
+            root,                                     // En bas à gauche
+            root + new Vector2Int(1, 0),              // En bas à droite
+            root + new Vector2Int(0, 1),              // En haut à gauche
+            root + new Vector2Int(1, 1)               // En haut à droite
+        };
+    }
 
-    public List<Vector3> Waypoints { get; private set; } = new List<Vector3>();
+    public Dictionary<Vector2Int, List<Vector3>> WaypointsParSpawn { get; private set; } = new Dictionary<Vector2Int, List<Vector3>>();
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            
-            // On charge les données du ScriptableObject
-            if (currentLevel != null)
-            {
-                startCoords = currentLevel.startCoords;
-                endCoords = currentLevel.endCoords;
-            }
-            else
-            {
-                Debug.LogError("[LevelManager] Aucun LevelConfig n'est assigné !");
-            }
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
     public bool IsStartOrEnd(Vector2Int coords)
     {
-        return coords == startCoords || coords == endCoords;
+        // On vérifie si la case cliquée fait partie des 4 cases de la base
+        if (GetBaseCoords().Contains(coords)) return true;
+        return spawnPoints.Contains(coords);
     }
     
-    public void EnregistrerWaypoints(List<Vector3> nouveauxWaypoints)
+    public void EnregistrerWaypoints(Vector2Int spawnPoint, List<Vector3> nouveauxWaypoints)
     {
-        Waypoints = nouveauxWaypoints;
-        Debug.Log($"[LevelManager] Phase d'Action : {Waypoints.Count} Waypoints verrouillés !");
+        WaypointsParSpawn[spawnPoint] = nouveauxWaypoints;
     }
 }

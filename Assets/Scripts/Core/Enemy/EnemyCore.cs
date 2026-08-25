@@ -2,14 +2,11 @@ using System;
 using UnityEngine;
 
 [RequireComponent(typeof(EnemyStatusManager))]
-
-// Gère la vie et la partie combat de l'ennemi
 public class EnemyCore : MonoBehaviour, IStatusReceiver
 {
     [Header("Données")]
     public EnemyData data; 
 
-    // Les stats dynamiques (accessibles par les autres composants)
     public Stat MaxHealth { get; private set; }
     public Stat Armor { get; private set; }
     public Stat Speed { get; private set; }
@@ -28,7 +25,6 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
             return;
         }
 
-        // Initialisation 
         MaxHealth = new Stat(data.baseHealth);
         Armor = new Stat(data.baseArmor);
         Speed = new Stat(data.baseSpeed);
@@ -47,6 +43,7 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
         GameEvents.TriggerEnemyRemoved();
     }
 
+    // Le payload est maintenant un struct, il est passé par valeur (copie)
     public void ReceivePayload(HitPayload payload)
     {
         if (isDead) return;
@@ -76,7 +73,9 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
 
         OnDeath?.Invoke();
 
-        if (fatalPayload != null && fatalPayload.instigator != null)
+        // CORRECTION ICI : fatalPayload étant un struct, il ne peut pas être null.
+        // On vérifie directement si l'instigateur (le GameObject de la tour) existe bien.
+        if (fatalPayload.instigator != null)
         {
             BasicTower tower = fatalPayload.instigator.GetComponent<BasicTower>();
             if (tower != null) 
@@ -88,13 +87,11 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
         Destroy(gameObject); 
     }
 
-    // Méthode appelée par le script de mouvement quand la fin du chemin est atteinte
     public void ReachGoal()
     {
         if (isDead) return;
         isDead = true;
         
-        // Plus tard : GameManager.Instance.LoseLife(1);
         Destroy(gameObject);
     }
 }

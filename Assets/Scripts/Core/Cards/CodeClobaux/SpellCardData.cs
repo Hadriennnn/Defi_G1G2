@@ -1,13 +1,27 @@
 using UnityEngine;
 
-// L'Enum SpellLogicType a été supprimé !
-
 public abstract class SpellCardData : CardData
 {
     [Header("Données de Sort (Pouvoir)")]
-    [Tooltip("Vrai si le sort doit être ciblé sur une zone (AoE), Faux s'il est global.")]
     public bool requiresTargeting;
 
-    // La méthode magique du polymorphisme
     public abstract ISpellEffect CreateSpellEffect();
+
+    public override bool TryPlayCard(Vector2Int targetCoords, PlacementManager context)
+    {
+        Node clickedNode = context.GridData.Grid[targetCoords.x, targetCoords.y];  
+
+        if (requiresTargeting && !clickedNode.isWalkable && !context.TryGetTowerAt(targetCoords, out _)) 
+        {
+            // Gestion ciblée à affiner plus tard
+        }
+
+        if (!EnergyManager.Instance.TrySpendEnergy(cost)) return false;
+
+        Vector3 targetPos = context.GetWorldPosition(targetCoords);
+        ISpellEffect spellLogic = CreateSpellEffect();
+        spellLogic.Execute(targetPos);
+
+        return true;
+    }
 }

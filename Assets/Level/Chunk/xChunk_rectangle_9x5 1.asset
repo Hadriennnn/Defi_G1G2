@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7280b940d4b8b2c41b2c1995ccefad51, type: 3}
+  m_Name: xChunk_rectangle_9x5 1
+  m_EditorClassIdentifier: Assembly-CSharp::ChunkData
+  largeur: 9
+  hauteur: 5
+  sockets:
+  - localPosition: {x: 1, y: 4}
+    direction: 4
+    type: 2
+  - localPosition: {x: 8, y: 2}
+    direction: 2
+    type: 1
+  - localPosition: {x: 0, y: 2}
+    direction: 3
+    type: 0
+  elevationMap:
+  - cells: 000000000000000000000000010000000100000001000000010000000100000000000000
+  - cells: 000000000000000000000000000000000100000000000000000000000000000000000000
+  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
+  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000
+  - cells: 000000000000000000000000000000000000000000000000000000000000000000000000

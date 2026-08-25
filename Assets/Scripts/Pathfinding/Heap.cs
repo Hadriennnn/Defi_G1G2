@@ -1,6 +1,5 @@
 using System;
 
-// L'interface qui permet aux éléments de se classer eux-mêmes
 public interface IHeapItem<T> : IComparable<T>
 {
     int HeapIndex { get; set; }
@@ -43,10 +42,14 @@ public class Heap<T> where T : IHeapItem<T>
 
     public bool Contains(T item)  
     {  
-        // si l'index n'est pas valide dans le Heap actuel, il n'est pas dedans
         if (item.HeapIndex < 0 || item.HeapIndex >= currentItemCount) return false;  
-    
         return Equals(items[item.HeapIndex], item);  
+    }
+
+    // NOUVEAU : Permet de vider le Heap sans le détruire (Optimisation GC)
+    public void Clear()
+    {
+        currentItemCount = 0;
     }
 
     void SortDown(T item)

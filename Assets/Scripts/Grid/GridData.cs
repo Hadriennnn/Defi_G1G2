@@ -11,23 +11,19 @@ public class GridData : MonoBehaviour
     [HideInInspector] public int largeur;
     [HideInInspector] public int hauteur;
 
+    void OnEnable() { GameEvents.OnChunkUnlocked += UnlockChunk; }
+    void OnDisable() { GameEvents.OnChunkUnlocked -= UnlockChunk; }
+
     public void Init()
     {
-        LevelConfig currentLevel = LevelManager.Instance.currentLevel;
-
-        if (currentLevel != null)
-        {
-            largeur = currentLevel.largeur;
-            hauteur = currentLevel.hauteur;
-            GenerateGridData(currentLevel); 
-        }
-        else
-        {
-            Debug.LogError("[GridData] Impossible de générer la grille : LevelManager n'a pas de niveau !");
-        }
+        // On récupère la taille géante du tapis de jeu (ex: 50x50)
+        largeur = ChunkManager.Instance.globalGridSize;
+        hauteur = ChunkManager.Instance.globalGridSize;
+        
+        GenerateGridData(); 
     }
 
-    void GenerateGridData(LevelConfig currentLevel)
+    void GenerateGridData()
     {
         Grid = new Node[largeur, hauteur];
 
@@ -35,16 +31,20 @@ public class GridData : MonoBehaviour
         {
             for (int x = 0; x < largeur; x++)
             {
-                float nodeElevation = 0f;
+                // On lit l'élévation "cuite" par le ChunkManager
+                int bakedElevation = ChunkManager.Instance.bakedElevation[x, y];
+                int bakedChunkId = ChunkManager.Instance.bakedChunkIds[x, y];
 
-                if (currentLevel.elevationMap != null &&
-                    y < currentLevel.elevationMap.Length &&
-                    x < currentLevel.elevationMap[y].cells.Length)
-                {
-                    nodeElevation = currentLevel.elevationMap[y].cells[x];
-                }
+                // Si c'est du vide (-1), on le met à l'élévation 0 mais Non-Marchable
+                float nodeElevation = (bakedElevation == -1) ? 0f : (float)bakedElevation;
+                bool isWalkable = (bakedElevation != -1);
 
-                Grid[x, y] = new Node(x, y, true, nodeElevation);
+                Node newNode = new Node(x, y, isWalkable, nodeElevation, bakedChunkId);
+                
+                // Au début, on n'active que le Chunk n°1 (La Base posée par défaut)
+                if (bakedChunkId == 1) newNode.isActive = true;
+
+                Grid[x, y] = newNode;
             }
         }
     }
@@ -66,12 +66,36 @@ public class GridData : MonoBehaviour
             if (checkX >= 0 && checkX < largeur && checkY >= 0 && checkY < hauteur)
             {
                 Node targetNode = Grid[checkX, checkY];
-                if (targetNode.isWalkable)
+                if (targetNode.isWalkable && targetNode.isActive)
                 {
                     neighbors.Add(targetNode);
                 }
             }
         }
         return neighbors;
+    }
+    
+    // On débloque un Chunk ID (Utilisé quand le WaveManager déclenche un "Push")
+    public void UnlockChunk(int chunkIdToUnlock)
+    {
+        bool chunkFound = false;
+        for (int y = 0; y < hauteur; y++)
+        {
+            for (int x = 0; x < largeur; x++)
+            {
+                if (Grid[x, y].chunkId == chunkIdToUnlock && !Grid[x, y].isActive)
+                {
+                    Grid[x, y].isActive = true;
+                    chunkFound = true;
+                }
+            }
+        }
+        
+        if (chunkFound)
+        {
+            Debug.Log($"[GridData] Le Bloc {chunkIdToUnlock} est sorti de terre !");
+            GameEvents.TriggerMapExpanded(); 
+            GameEvents.TriggerGridChanged(); 
+        }
     }
 }

@@ -9,7 +9,6 @@ public class BasicTower : MonoBehaviour
     [SerializeField] private float baseFireRate = 1f; 
     [SerializeField] private float initialDamage = 25f;
 
-    // Nos Stats dynamiques de la Phase 1
     public Stat Range;
     public Stat FireRate;
     public Stat Damage;
@@ -22,16 +21,16 @@ public class BasicTower : MonoBehaviour
     public LayerMask enemyLayer; 
     
     [Header("Optimisation")]
-    [Tooltip("Nombre maximum d'ennemis que la tour peut évaluer en même temps. 20 est largement suffisant.")]
     [SerializeField] private int maxEnemiesEvaluated = 20;
 
     private float fireCountdown = 0f;
     private Transform currentTarget;
-    
-    // BUFFER PRÉ-ALLOUÉ : Évite la création de tableaux à chaque frame
     private Collider[] enemyHitBuffer;
 
-    public event Action<HitPayload> OnBeforeShoot; 
+    // NOUVEAU : On crée un délégué spécifique avec "ref" pour que les gemmes puissent modifier le struct original
+    public delegate void BeforeShootHandler(ref HitPayload payload);
+    public event BeforeShootHandler OnBeforeShoot; 
+    
     public event Action OnShoot; 
     public event Action<GameObject> OnTargetKilled;
 
@@ -40,8 +39,6 @@ public class BasicTower : MonoBehaviour
         Range = new Stat(baseRange);
         FireRate = new Stat(baseFireRate);
         Damage = new Stat(initialDamage);
-        
-        // Initialisation du buffer une seule fois
         enemyHitBuffer = new Collider[maxEnemiesEvaluated];
     }
 
@@ -63,14 +60,11 @@ public class BasicTower : MonoBehaviour
     void UpdateTarget()
     {
         Vector3 trueCenter = transform.position + centerOffset;
-        
-        // NON-ALLOC : Remplit le tableau existant et retourne le nombre d'ennemis trouvés
         int hits = Physics.OverlapSphereNonAlloc(trueCenter, Range.Value, enemyHitBuffer, enemyLayer);
         
         float shortestDistance = Mathf.Infinity;
         Transform nearestEnemy = null;
 
-        // On boucle uniquement sur le nombre de "hits" trouvés, pas sur tout le tableau
         for (int i = 0; i < hits; i++)
         {
             float distanceToEnemy = Vector3.Distance(trueCenter, enemyHitBuffer[i].transform.position);
@@ -86,15 +80,18 @@ public class BasicTower : MonoBehaviour
 
     void Shoot()
     {
+        // OPTIMISATION : On n'instancie plus de nouvelle List<StatusEffect>() ici. 
+        // Par défaut, elle vaut null. Zéro allocation mémoire !
         HitPayload payload = new HitPayload 
         { 
             rawDamage = Damage.Value,
             element = ElementType.Normal,
             instigator = this.gameObject,
-            effectsToApply = new List<StatusEffect>()
+            effectsToApply = null 
         };
         
-        OnBeforeShoot?.Invoke(payload);
+        // On passe le payload par référence (ref)
+        OnBeforeShoot?.Invoke(ref payload);
         
         GameObject projGO = PoolManager.Instance.Spawn(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectile = projGO.GetComponent<Projectile>();

@@ -7,32 +7,27 @@ public class GridVisualizer : MonoBehaviour
     private GridData gridData;  
 
     [Header("Configuration Verticalité")]
-    [Tooltip("La hauteur exacte d'un bloc en unités Unity")]
     public float hauteurNiveau = 0.7f; 
-    [Tooltip("Le préfab de falaise/corps utilisé sous la surface")]
     public GameObject falaisePrefab; 
-    
-    [Tooltip("Nombre de blocs générés en dessous du niveau 0 pour donner de l'épaisseur à la carte")]
-    public int profondeurSousTerre = 2; // Par défaut on descend jusqu'à -2 (soit 3 blocs d'épaisseur avec le niveau 0)
+    public int profondeurSousTerre = 2; 
 
     [Header("Configuration Décors 3D (Surfaces)")]  
     public GameObject tuileSolPrefab;  
+    
+    [Header("Configuration Entrée / Sortie")]
     public GameObject tuileEntreePrefab;  
+    public float offsetRotationEntree = 0f; // NOUVEAU
+    
     public GameObject tuileSortiePrefab;  
+    public float offsetRotationSortie = 0f; // NOUVEAU
     
     [Header("Kit de Tuiles Modulaires (Chemin)")]  
     public GameObject tilePathStraight;
     public float offsetStraight = 0f;
-    
-    [Space(5)]
     public GameObject tilePathCorner;   
     public float offsetCorner = 0f;
-    
-    [Space(5)]
     public GameObject tilePathT;        
     public float offsetT = 0f;
-    
-    [Space(5)]
     public GameObject tilePathCross;    
     public float offsetCross = 0f;
 
@@ -49,32 +44,24 @@ public class GridVisualizer : MonoBehaviour
     private void OnEnable()  
     {  
         GameEvents.OnPathUpdated += DrawPath;  
+        GameEvents.OnMapExpanded += DrawBaseGrid; 
     }  
 
     private void OnDisable()  
     {  
         GameEvents.OnPathUpdated -= DrawPath;  
+        GameEvents.OnMapExpanded -= DrawBaseGrid;
     }  
 
     void DrawBaseGrid()  
     {  
-        // Nettoyage complet des objets existants
-        foreach (GameObject falaise in objetsFalaises) 
-        { 
-            if (falaise != null) Destroy(falaise); 
-        }
+        foreach (GameObject falaise in objetsFalaises) { if (falaise != null) Destroy(falaise); }
         objetsFalaises.Clear();
 
         if (tuilesSolMemoire != null)
         {
-            foreach (GameObject sol in tuilesSolMemoire)
-            {
-                if (sol != null) Destroy(sol);
-            }
+            foreach (GameObject sol in tuilesSolMemoire) { if (sol != null) Destroy(sol); }
         }
-
-        Vector2Int startCoords = LevelManager.Instance.startCoords;
-        Vector2Int endCoords = LevelManager.Instance.endCoords;
 
         tuilesSolMemoire = new GameObject[gridData.largeur, gridData.hauteur];
 
@@ -83,14 +70,14 @@ public class GridVisualizer : MonoBehaviour
             for (int y = 0; y < gridData.hauteur; y++)  
             {  
                 Node currentNode = gridData.Grid[x, y];
+                
+                if (!currentNode.isActive) continue;
+
                 int targetHeight = Mathf.Max(0, Mathf.RoundToInt(currentNode.elevation));
 
-                // NOUVEAU : On commence la boucle en négatif sous la terre !
                 for (int h = -profondeurSousTerre; h <= targetHeight; h++)
                 {
                     Vector3 position = GetWorldPosition(x, y);
-                    
-                    // Le Y va automatiquement être négatif pour les blocs du dessous
                     position.y = transform.position.y + (h * hauteurNiveau);
 
                     bool isTopBlock = (h == targetHeight);
@@ -98,20 +85,53 @@ public class GridVisualizer : MonoBehaviour
                     if (isTopBlock)
                     {
                         GameObject prefabADessiner = tuileSolPrefab;
+                        float yRotationOffset = 0f; // NOUVEAU : On prépare la rotation
 
-                        if (x == startCoords.x && y == startCoords.y && tuileEntreePrefab != null)
+                        // 1. GESTION DE L'ENTRÉE
+                        if (LevelManager.Instance.spawnPoints.Contains(new Vector2Int(x, y)) && tuileEntreePrefab != null)
                         {
                             prefabADessiner = tuileEntreePrefab;
+                            yRotationOffset = offsetRotationEntree; // On applique l'offset
                         }
-                        else if (x == endCoords.x && y == endCoords.y && tuileSortiePrefab != null)
+                        
+                        // 2. GESTION DE LA BASE 2x2
+                        bool isBaseRoot = (x == ChunkManager.Instance.baseNoyauCoords.x && y == ChunkManager.Instance.baseNoyauCoords.y);
+                        bool isPartOfBase = LevelManager.Instance.GetBaseCoords().Contains(new Vector2Int(x, y));
+
+                        if (isBaseRoot && tuileSortiePrefab != null)
                         {
                             prefabADessiner = tuileSortiePrefab;
+                            yRotationOffset = offsetRotationSortie; // On applique l'offset
+                            
+                            position.x += gridData.cellSize / 2f;
+                            position.z += gridData.cellSize / 2f;
+                        }
+                        else if (isPartOfBase)
+                        {
+                            // CORRECTION : On ne dessine PLUS RIEN sur les 3 autres cases de la base
+                            prefabADessiner = null; 
                         }
 
                         if (prefabADessiner != null)
                         {
-                            GameObject solInstancie = Instantiate(prefabADessiner, position, prefabADessiner.transform.rotation, transform);
+                            // Calcul de la rotation finale
+                            Vector3 originalEuler = prefabADessiner.transform.eulerAngles;
+                            Quaternion finalRotation = Quaternion.Euler(originalEuler.x, originalEuler.y + yRotationOffset, originalEuler.z);
+
+                            GameObject solInstancie = Instantiate(prefabADessiner, position, finalRotation, transform);
                             tuilesSolMemoire[x, y] = solInstancie;
+
+                            // On donne les coordonnées ET le Chunk ID au portail
+                            if (prefabADessiner == tuileEntreePrefab)
+                            {
+                                EnemySpawner spawner = solInstancie.GetComponent<EnemySpawner>();
+                                if (spawner != null) 
+                                {
+                                    // On récupère l'ID du chunk sur lequel on se trouve
+                                    int idDuChunk = currentNode.chunkId; 
+                                    spawner.Init(new Vector2Int(x, y), idDuChunk);
+                                }
+                            }
                         }
                     }
                     else
@@ -129,39 +149,28 @@ public class GridVisualizer : MonoBehaviour
 
     public void DrawPath(List<Node> path)  
     {  
-        foreach (GameObject objet in objetsChemin)
-        {
-            Destroy(objet);
-        }
+        foreach (GameObject objet in objetsChemin) { Destroy(objet); }
         objetsChemin.Clear();
 
         if (tuilesSolMemoire != null)
         {
-            foreach (GameObject tuile in tuilesSolMemoire)
-            {
-                if (tuile != null) tuile.SetActive(true);
-            }
+            foreach (GameObject tuile in tuilesSolMemoire) { if (tuile != null) tuile.SetActive(true); }
         }
 
         if (LevelManager.Instance == null || path == null) return;
-
-        Vector2Int startCoords = LevelManager.Instance.startCoords;
-        Vector2Int endCoords = LevelManager.Instance.endCoords;
 
         HashSet<Vector2Int> pathSet = new HashSet<Vector2Int>();
         foreach (Node n in path) 
         {
             pathSet.Add(new Vector2Int(n.gridX, n.gridY));
         }
-        
-        pathSet.Add(startCoords);
-        pathSet.Add(endCoords);
+
+        foreach(var spawn in LevelManager.Instance.spawnPoints) { pathSet.Add(spawn); }
+        foreach(var baseCoord in LevelManager.Instance.GetBaseCoords()) { pathSet.Add(baseCoord); }
 
         foreach (Node n in path)  
         {  
-            if ((n.gridX == startCoords.x && n.gridY == startCoords.y) ||  
-                (n.gridX == endCoords.x && n.gridY == endCoords.y))  
-                continue;  
+            if (LevelManager.Instance.IsStartOrEnd(new Vector2Int(n.gridX, n.gridY))) continue;  
 
             Vector2Int pos = new Vector2Int(n.gridX, n.gridY);
             
@@ -190,7 +199,7 @@ public class GridVisualizer : MonoBehaviour
                 case 15: prefabToInstantiate = tilePathCross; rotationY = 0f; currentOffset = offsetCross; break;
             }
 
-            if (prefabToInstantiate != null)
+            if (prefabToInstantiate != null && tuilesSolMemoire[n.gridX, n.gridY] != null) 
             {
                 Vector3 position = GetWorldPosition(n.gridX, n.gridY);
                 position.y = transform.position.y + (n.elevation * hauteurNiveau) + 0.01f; 
@@ -202,10 +211,7 @@ public class GridVisualizer : MonoBehaviour
                 GameObject cheminObj = Instantiate(prefabToInstantiate, position, rotation, transform);
                 objetsChemin.Add(cheminObj);
 
-                if (tuilesSolMemoire[n.gridX, n.gridY] != null)
-                {
-                    tuilesSolMemoire[n.gridX, n.gridY].SetActive(false);
-                }
+                tuilesSolMemoire[n.gridX, n.gridY].SetActive(false);
             }
         }  
     }  

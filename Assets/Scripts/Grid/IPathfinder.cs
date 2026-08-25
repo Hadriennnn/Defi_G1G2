@@ -1,6 +1,7 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public interface IPathfinder
 {
-    bool FindPath(Vector2Int startPos, Vector2Int targetPos);
+    bool CheckAllPaths();
 }

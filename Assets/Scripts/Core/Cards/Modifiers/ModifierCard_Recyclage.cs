@@ -7,6 +7,10 @@ public class Mod_Recyclage : IModifierEffect
     {
         Debug.Log($"[Modificateur] Tour {targetTower.name} recyclée ! +3 Énergie.");
         EnergyManager.Instance.GainInstantEnergy(3);
+        
+        // CORRECTION VITAL : Rend la case marchable instantanément 
+        targetTower.SetActive(false);
+        
         Object.Destroy(targetTower);
     }
 }

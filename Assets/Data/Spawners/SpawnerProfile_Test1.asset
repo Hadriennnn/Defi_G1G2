@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdce6538f23b82a4385cb26e9f170c29, type: 3}
+  m_Name: SpawnerProfile_Test1
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerProfile
+  distanceMultiplierPerCell: 0.05
+  enableIncrementCap: 1
+  baseMaxIncrements: 1
+  capBonusPerChunk: 2
+  capBonusPerCellDistance: 0.2
+  regularSpawns:
+  - ruleName: basicEnnemi
+    enemyPrefab: {fileID: 4963533562085925753, guid: 7180b0b60865ae045bac0f2674b6b922, type: 3}
+    baseQuantity: 3
+    incrementPerWave: 1
+    spawnDelay: 0.5
+  milestoneSpawns: []

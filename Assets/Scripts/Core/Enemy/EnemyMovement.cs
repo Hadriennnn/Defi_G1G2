@@ -20,13 +20,9 @@ public class EnemyMovement : MonoBehaviour
         personalOffset = new Vector3(randomX, 0f, randomZ); 
     }
 
-    void Start()
+    public void AssignerChemin(List<Vector3> chemin)
     {
-        if (LevelManager.Instance != null)
-        {
-            waypoints = LevelManager.Instance.Waypoints; 
-        }
-
+        waypoints = chemin;
         if (waypoints != null && waypoints.Count > 0)
         {
             transform.position = waypoints[0] + personalOffset; 
@@ -49,7 +45,6 @@ public class EnemyMovement : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, 10f * Time.deltaTime); 
         }
         
-        // On lit la vitesse dynamiquement depuis le Core (qui peut être modifiée par des trucs)
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, core.Speed.Value * Time.deltaTime);
         
         Vector2 currentPos2D = new Vector2(transform.position.x, transform.position.z);

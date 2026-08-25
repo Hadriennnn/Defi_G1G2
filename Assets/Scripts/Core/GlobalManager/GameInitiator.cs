@@ -1,10 +1,7 @@
 using UnityEngine;
 
-/* 
+/*
  * RÉSUMÉ : Point d'entrée de la scène, fait l'ordre strict d'initialisation de tous les systèmes au démarrage du jeux.
- 
- * MÉTHODES PRINCIPALES :
- * - LancerLeJeu() : Initialise successivement les couches du jeux.
  */
 
 public class GameInitiator : MonoBehaviour
@@ -22,21 +19,19 @@ public class GameInitiator : MonoBehaviour
 
     private void LancerLeJeu()
     {
-        Debug.Log("[GameInitiator] 1/4 : Génération des données de la grille...");
+        Debug.Log("[GameInitiator] 1/5 : Création de la Toile procédurale (ChunkManager)...");
+        ChunkManager.Instance.GenererMondeInitial();
+
+        Debug.Log("[GameInitiator] 2/5 : Génération des données physiques de la grille...");
         gridData.Init();
 
-        
-
-        Debug.Log("[GameInitiator] 3/4 : Création des décors et visuels...");
-        // Le visuel a besoin de la grille et du chemin initial !
+        Debug.Log("[GameInitiator] 3/5 : Création des décors et visuels 3D...");
         gridVisualizer.Init();
         
-        Debug.Log("[GameInitiator] 2/4 : Initialisation de l'IA et du Pathfinding...");
-        // Le Pathfinding a besoin que la grille soit générée en premier !
+        Debug.Log("[GameInitiator] 4/5 : Initialisation de l'IA et du Pathfinding...");
         pathfinding.Init();
 
-        Debug.Log("[GameInitiator] 4/4 : Démarrage de la boucle de jeu...");
-        // Tout est prêt, on lance la phase de préparation !
+        Debug.Log("[GameInitiator] 5/5 : Démarrage de la boucle de jeu...");
         gameManager.Init();
         
         Debug.Log("[GameInitiator] --- LE JEU EST PRÊT ! ---");

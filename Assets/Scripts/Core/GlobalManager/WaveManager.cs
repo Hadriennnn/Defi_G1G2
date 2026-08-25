@@ -1,34 +1,27 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class WaveConfig
-{
-    public string waveName = "Vague 1";
-    public GameObject enemyPrefab;
-    public int enemyCount = 5;
-    public float spawnDelay = 1.5f; 
-}
-
-/*
- * RÉSUMÉ : Gère l'apparition des ennemis et le retour à la phase de préparation.
- */
 public class WaveManager : MonoBehaviour
 {
-    [Header("Configuration des Vagues")]
-    public List<WaveConfig> waves;
-    private int currentWaveIndex = 0;
+    [Header("Progression des Vagues")]
+    [Tooltip("La vague actuelle. Doit toujours commencer à 1.")]
+    public int currentWaveIndex = 1; 
 
-    // Variables pour traquer l'état de la vague
+    [Header("Progression de la Carte")]
+    [Tooltip("Toutes les X vagues, un nouveau bloc sort de terre (0 = jamais)")]
+    public int chunkUnlockInterval = 2;
+    
+    // Le chunk 1 est la base de départ, donc le prochain à débloquer est le 2
+    private int nextChunkIdToUnlock = 2; 
+
     private int activeEnemyCount = 0;
-    private bool isSpawning = false;
+    private int activeSpawnersCount = 0; 
 
     void OnEnable()
     {
         GameEvents.OnGameStateChanged += GererChangementPhase;
         GameEvents.OnEnemySpawned += GererApparitionEnnemi;
         GameEvents.OnEnemyRemoved += GererMortEnnemi;
+        GameEvents.OnSpawnerFinished += GererFinSpawner;
     }
 
     void OnDisable()
@@ -36,64 +29,62 @@ public class WaveManager : MonoBehaviour
         GameEvents.OnGameStateChanged -= GererChangementPhase;
         GameEvents.OnEnemySpawned -= GererApparitionEnnemi;
         GameEvents.OnEnemyRemoved -= GererMortEnnemi;
+        GameEvents.OnSpawnerFinished -= GererFinSpawner;
     }
 
     private void GererApparitionEnnemi() => activeEnemyCount++;
     
-    private void GererMortEnnemi()
-    {
-        activeEnemyCount--;
-        VerifierFinDeVague();
+    private void GererMortEnnemi() 
+    { 
+        activeEnemyCount--; 
+        VerifierFinDeVague(); 
+    }
+    
+    private void GererFinSpawner() 
+    { 
+        activeSpawnersCount--; 
+        VerifierFinDeVague(); 
     }
 
     private void GererChangementPhase(GameState state)
     {
-        if (state == GameState.ActionPhase)
+        if (state == GameState.PreparationPhase)
         {
-            StartCoroutine(SpawnWave());
-        }
-    }
-
-    private IEnumerator SpawnWave()
-    {
-        isSpawning = true;
-        yield return new WaitForSeconds(0.1f);
-
-        if (currentWaveIndex >= waves.Count)
-        {
-            Debug.Log("[WaveManager] Toutes les vagues ont été terminées !");
-            isSpawning = false;
-            VerifierFinDeVague();
-            yield break;
-        }
-
-        WaveConfig vagueActuelle = waves[currentWaveIndex];
-        Debug.Log($"[WaveManager] Début de la : {vagueActuelle.waveName}");
-
-        for (int i = 0; i < vagueActuelle.enemyCount; i++)
-        {
-            if (vagueActuelle.enemyPrefab != null)
+            // NOUVEAU : Logique de déblocage des Chunks
+            if (chunkUnlockInterval > 0 && currentWaveIndex > 1)
             {
-                Instantiate(vagueActuelle.enemyPrefab);
+                // Si on a passé le bon nombre de vagues, on débloque le chunk suivant
+                if ((currentWaveIndex - 1) % chunkUnlockInterval == 0)
+                {
+                    Debug.Log($"[WaveManager] Vague {currentWaveIndex} atteinte : Déblocage du Chunk {nextChunkIdToUnlock} !");
+                    GameEvents.TriggerChunkUnlocked(nextChunkIdToUnlock);
+                    nextChunkIdToUnlock++;
+                }
             }
-            yield return new WaitForSeconds(vagueActuelle.spawnDelay);
         }
+        else if (state == GameState.ActionPhase)
+        {
+            Debug.Log($"[WaveManager] --- DÉBUT DE LA VAGUE {currentWaveIndex} ---");
+            
+            activeSpawnersCount = FindObjectsOfType<EnemySpawner>().Length;
 
-        isSpawning = false;
-        currentWaveIndex++;
-        
-        // On vérifie au cas où les tours auraient déjà tué tous les monstres avant la fin de l'invocation
-        VerifierFinDeVague();
+            if (activeSpawnersCount == 0)
+            {
+                Debug.LogWarning("[WaveManager] Aucun portail actif trouvé ! Fin de vague immédiate.");
+                VerifierFinDeVague();
+                return;
+            }
+
+            GameEvents.TriggerWaveStarted(currentWaveIndex);
+        }
     }
 
     private void VerifierFinDeVague()
     {
-        // Si l'invocation est terminée ET qu'il n'y a plus d'ennemis ET qu'on est bien en phase d'action
-        if (!isSpawning && activeEnemyCount <= 0 && GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.ActionPhase)
+        if (activeSpawnersCount <= 0 && activeEnemyCount <= 0 && GameManager.Instance.CurrentState == GameState.ActionPhase)
         {
-            Debug.Log("[WaveManager] Vague nettoyée ! Retour à la phase de préparation.");
-            
-            // On ordonne au GameManager de repasser en préparation
+            Debug.Log($"[WaveManager] Vague {currentWaveIndex} terminée avec succès !");
+            currentWaveIndex++;
             GameManager.Instance.RelancerPhasePreparation();
         }
     }
