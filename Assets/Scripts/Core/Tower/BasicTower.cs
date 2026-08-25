@@ -27,7 +27,7 @@ public class BasicTower : MonoBehaviour
     private Transform currentTarget;
     private Collider[] enemyHitBuffer;
 
-    // NOUVEAU : On crée un délégué spécifique avec "ref" pour que les gemmes puissent modifier le struct original
+    //On crée un délégué spécifique avec "ref" pour que les gemmes puissent modifier le struct original
     public delegate void BeforeShootHandler(ref HitPayload payload);
     public event BeforeShootHandler OnBeforeShoot; 
     

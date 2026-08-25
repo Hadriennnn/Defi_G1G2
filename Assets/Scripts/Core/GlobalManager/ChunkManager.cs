@@ -14,7 +14,9 @@ public class ChunkManager : MonoBehaviour
     public static ChunkManager Instance { get; private set; }
 
     [Header("Bibliothèque de Chunks")]
-    public ChunkData chunkDeBase;
+    [Tooltip("Les bases possibles. Une seule sera tirée au hasard au démarrage.")]
+    public List<ChunkData> basesDisponibles; 
+    [Tooltip("Les blocs de chemin normaux.")]
     public List<ChunkData> chunksDisponibles;
 
     [Header("Paramètres du Monde")]
@@ -29,7 +31,7 @@ public class ChunkManager : MonoBehaviour
     public int[,] bakedChunkIds;
     
     // --- LES LISTES DYNAMIQUES ---
-    public List<Vector2Int> activeSpawns = new List<Vector2Int>();
+    public Dictionary<Vector2Int, SpawnerProfile> activeSpawns = new Dictionary<Vector2Int, SpawnerProfile>();
     public Vector2Int baseNoyauCoords;
     private List<GlobalSocket> openDoors = new List<GlobalSocket>();
 
@@ -55,15 +57,18 @@ public class ChunkManager : MonoBehaviour
             }
         }
 
-        if (chunkDeBase != null)
+        // TIRAGE AU SORT DE LA BASE
+        if (basesDisponibles != null && basesDisponibles.Count > 0)
         {
+            ChunkData chunkDeBase = basesDisponibles[Random.Range(0, basesDisponibles.Count)];
+
             int offsetX = (globalGridSize / 2) - (chunkDeBase.largeur / 2);
             int offsetY = (globalGridSize / 2) - (chunkDeBase.hauteur / 2);
             
             // Le Chunk de base reçoit toujours l'ID 1
             PlacerChunk(chunkDeBase, new Vector2Int(offsetX, offsetY));
             
-            // NOUVEAU : On génère immédiatement le reste de l'île (qui restera invisible)
+            // On génère immédiatement le reste de l'île (qui restera invisible jusqu'à son déblocage)
             for (int i = 0; i < nombreDeChunksAGenerer; i++)
             {
                 GenererNouveauChunk();
@@ -71,7 +76,7 @@ public class ChunkManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[ChunkManager] ERREUR : Aucun Chunk de Base assigné !");
+            Debug.LogError("[ChunkManager] ERREUR : Aucune base disponible dans la liste !");
         }
     }
 
@@ -166,7 +171,17 @@ public class ChunkManager : MonoBehaviour
             }
             else if (socket.type == SocketType.Portail_Spawn)
             {
-                activeSpawns.Add(globalPos);
+                SpawnerProfile profileToAssign = socket.spawnerProfile;
+                
+                // Si aucun profil n'est assigné en dur, on demande au SpawnDirector
+                if (profileToAssign == null && SpawnDirector.Instance != null)
+                {
+                    float distance = Vector2Int.Distance(globalPos, baseNoyauCoords);
+                    profileToAssign = SpawnDirector.Instance.GetRandomProfile(chunkIdAssigne, distance);
+                }
+
+                // On enregistre la position ET le profil
+                activeSpawns.Add(globalPos, profileToAssign);
             }
             else if (socket.type == SocketType.Noyau_Base)
             {
@@ -200,4 +215,40 @@ public class ChunkManager : MonoBehaviour
             default: return Vector2Int.zero;
         }
     }
+
+    // ==========================================
+    // OUTILS POUR LE DÉVELOPPEUR (ÉDITEUR ONLY)
+    // ==========================================
+#if UNITY_EDITOR
+    [ContextMenu("Trier et Charger TOUS les Chunks des Assets")]
+    public void AutoLoadChunks()
+    {
+        chunksDisponibles.Clear();
+        basesDisponibles.Clear();
+
+        string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ChunkData");
+        
+        foreach (string guid in guids)
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            ChunkData chunk = UnityEditor.AssetDatabase.LoadAssetAtPath<ChunkData>(path);
+            
+            if (chunk != null)
+            {
+                if (chunk.category == ChunkCategory.BaseDeDepart)
+                {
+                    basesDisponibles.Add(chunk);
+                }
+                else if (chunk.category == ChunkCategory.Standard)
+                {
+                    chunksDisponibles.Add(chunk);
+                }
+                // Si la catégorie est "Exclu", on l'ignore complètement
+            }
+        }
+
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log($"[ChunkManager] Outil Auto : {basesDisponibles.Count} Bases | {chunksDisponibles.Count} Chunks standards chargés.");
+    }
+#endif
 }

@@ -127,9 +127,16 @@ public class GridVisualizer : MonoBehaviour
                                 EnemySpawner spawner = solInstancie.GetComponent<EnemySpawner>();
                                 if (spawner != null) 
                                 {
-                                    // On récupère l'ID du chunk sur lequel on se trouve
                                     int idDuChunk = currentNode.chunkId; 
-                                    spawner.Init(new Vector2Int(x, y), idDuChunk);
+                                
+                                    // On va chercher le profil dans le dictionnaire du ChunkManager
+                                    SpawnerProfile profilDuChunk = null;
+                                    if (ChunkManager.Instance.activeSpawns.ContainsKey(new Vector2Int(x, y)))
+                                    {
+                                        profilDuChunk = ChunkManager.Instance.activeSpawns[new Vector2Int(x, y)];
+                                    }
+
+                                    spawner.Init(new Vector2Int(x, y), idDuChunk, profilDuChunk);
                                 }
                             }
                         }

@@ -16,11 +16,17 @@ public class EnemySpawner : MonoBehaviour
     void OnEnable() { GameEvents.OnWaveStarted += LancerGeneration; }
     void OnDisable() { GameEvents.OnWaveStarted -= LancerGeneration; }
 
-    // NOUVEAU : On reçoit aussi le ChunkId
-    public void Init(Vector2Int coords, int chunkId)
+    public void Init(Vector2Int coords, int chunkId, SpawnerProfile assignedProfile)
     {
         myGridCoords = coords;
         myChunkId = chunkId;
+        
+        // Si le Chunk a fourni un profil on l'utilise. Sinon on garde celui par défaut du Prefab.
+        if (assignedProfile != null) 
+        {
+            profile = assignedProfile;
+        }
+        
         CalculerDifficulte();
     }
 

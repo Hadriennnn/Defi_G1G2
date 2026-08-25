@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdce6538f23b82a4385cb26e9f170c29, type: 3}
+  m_Name: SpawnerProfile_Tier2_1
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerProfile
+  distanceMultiplierPerCell: 0.05
+  enableIncrementCap: 1
+  baseMaxIncrements: 2
+  capBonusPerChunk: 0.25
+  capBonusPerCellDistance: 0.1
+  regularSpawns:
+  - ruleName: Tier2
+    enemyPrefab: {fileID: 4963533562085925753, guid: a22d55a97c476b54ab0af176436594e0, type: 3}
+    baseQuantity: 3
+    incrementPerWave: 1
+    spawnDelay: 0.3
+  milestoneSpawns:
+  - ruleName: Boss_T2
+    enemyPrefab: {fileID: 4963533562085925753, guid: 7dbc68715e87e2c48b51f52648fad418, type: 3}
+    waveInterval: 2
+    quantity: 1
+    spawnDelay: 0.5

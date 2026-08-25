@@ -5,8 +5,7 @@ public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
-    public List<Vector2Int> spawnPoints => ChunkManager.Instance.activeSpawns;  
-
+    public List<Vector2Int> spawnPoints => new List<Vector2Int>(ChunkManager.Instance.activeSpawns.Keys);
     public List<Vector2Int> GetBaseCoords()
     {
         Vector2Int root = ChunkManager.Instance.baseNoyauCoords;

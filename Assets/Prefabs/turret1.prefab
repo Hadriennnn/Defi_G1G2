@@ -142,7 +142,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicTower
   baseRange: 5
-  baseFireRate: 1
+  baseFireRate: 2
   initialDamage: 5
   Range:
     baseValue: 0
@@ -156,6 +156,7 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 64
+  maxEnemiesEvaluated: 20
 --- !u!114 &3525583889181607281
 MonoBehaviour:
   m_ObjectHideFlags: 0

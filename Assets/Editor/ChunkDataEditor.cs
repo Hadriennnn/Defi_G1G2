@@ -12,6 +12,10 @@ public class ChunkDataEditor : Editor
 
         GUILayout.Label("Paramètres du Chunk", EditorStyles.boldLabel);
         
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("category"), new GUIContent("Catégorie"));
+        
+        GUILayout.Space(5);
+
         EditorGUILayout.PropertyField(serializedObject.FindProperty("largeur"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("hauteur"));
 
@@ -54,7 +58,7 @@ public class ChunkDataEditor : Editor
             alignment = TextAnchor.MiddleCenter
         };
 
-        for (int y = hauteur - 1; y >= 0; y--)
+        for (int y = hauteur - 1; y >= 0; y--) // Affichage de haut en bas
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Y " + y, GUILayout.Width(30));

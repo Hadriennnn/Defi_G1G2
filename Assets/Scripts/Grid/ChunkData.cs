@@ -3,13 +3,20 @@ using System.Collections.Generic;
 
 public enum SocketDirection { Nord, Sud, Est, Ouest, Aucune }
 
-// On définit clairement le RÔLE du point d'intérêt
 public enum SocketType 
 { 
-    Porte_Entree,  // Bordure : Le chemin vient d'un autre Chunk
-    Porte_Sortie,  // Bordure : Le chemin part vers un autre Chunk
-    Portail_Spawn, // N'importe où : Les ennemis apparaissent 
-    Noyau_Base     // N'importe où : La base du joueur 
+    Porte_Entree,  
+    Porte_Sortie,  
+    Portail_Spawn, 
+    Noyau_Base     
+}
+
+// NOUVEAU : Catégorie du Chunk pour le tri automatique
+public enum ChunkCategory 
+{ 
+    Standard,        // Chunk d'expansion normale (Labyrinthe, Chemin)
+    BaseDeDepart,    // Tiré au sort au début du jeu (doit contenir un Noyau_Base)
+    Exclu            // Tests, Boss, etc. Ne sera jamais utilisé automatiquement.
 }
 
 [System.Serializable]
@@ -21,6 +28,9 @@ public class ChunkSocket
     public SocketDirection direction;
     
     public SocketType type;
+
+    [Tooltip("À remplir uniquement si c'est un Portail_Spawn. Laisse vide pour l'IA Director.")]
+    public SpawnerProfile spawnerProfile; 
 }
 
 [System.Serializable]
@@ -32,6 +42,10 @@ public class ChunkRow
 [CreateAssetMenu(fileName = "NewChunkData", menuName = "TowerDefense/Terrain/Chunk Data")]
 public class ChunkData : ScriptableObject
 {
+    [Header("Catégorisation (Outils auto)")]
+    [Tooltip("Détermine dans quelle liste l'outil automatique va ranger ce Chunk.")]
+    public ChunkCategory category = ChunkCategory.Standard; 
+
     [Header("Dimensions du Chunk")]
     public int largeur = 5;
     public int hauteur = 5;

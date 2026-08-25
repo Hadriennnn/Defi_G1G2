@@ -66,7 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c593a136392f257418a01cef3901a88d, type: 2}
+  - {fileID: 2100000, guid: 2a35d14f02b33d64f84c75a37beac738, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -156,7 +156,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: be60342cd7d582042a7e3b62cafb9cb8, type: 2}
+  - {fileID: 2100000, guid: 3c79255b0c9e2fc41af5b94fc477059c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -195,7 +195,7 @@ GameObject:
   - component: {fileID: 8901308826647413487}
   - component: {fileID: 873559920988818115}
   m_Layer: 6
-  m_Name: BasicEnemy
+  m_Name: BasicEnemy 1_T2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -230,7 +230,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2ed9b2af417f7149b7462de3ffea3ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyCore
-  data: {fileID: 11400000, guid: 359457beb19371b49898365ba1fbc6bd, type: 2}
+  data: {fileID: 11400000, guid: 935fe988e4971414eaf27ddeda69d4e9, type: 2}
 --- !u!114 &3599309620168143763
 MonoBehaviour:
   m_ObjectHideFlags: 0

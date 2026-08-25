@@ -35,7 +35,7 @@ public class SpawnerProfile : ScriptableObject
     [Tooltip("Nombre maximum d'incrémentations de base (ex: 2)")]
     public float baseMaxIncrements = 2f;
     [Tooltip("Bonus de plafond par ordre d'apparition du Chunk (ex: 1.0 = +1 incrémentation max par nouveau chunk)")]
-    public float capBonusPerChunk = 1.0f;
+    public float capBonusPerChunk = 0.25f;
     [Tooltip("Bonus de plafond par case de distance (ex: 0.1 = +1 incrémentation max toutes les 10 cases)")]
     public float capBonusPerCellDistance = 0.1f;
 

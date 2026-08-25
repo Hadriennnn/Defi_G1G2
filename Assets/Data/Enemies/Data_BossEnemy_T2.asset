@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6402c44b74c905c439c0195fbfea6abb, type: 3}
-  m_Name: Data_BasicEnemy
+  m_Name: Data_BossEnemy_T2
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  enemyName: Ennemie de base
-  baseHealth: 20
-  baseArmor: 0
-  baseSpeed: 2
+  enemyName: Boss de Tier2
+  baseHealth: 50
+  baseArmor: 5
+  baseSpeed: 1

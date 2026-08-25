@@ -435,23 +435,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 182a531c7426a2a439618a7a0b36fa93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChunkManager
-  chunkDeBase: {fileID: 11400000, guid: b82ba0ea611142746b19ce2547b77012, type: 2}
+  basesDisponibles:
+  - {fileID: 11400000, guid: fa1c99c9f5f573f4f962c7ef6a2198eb, type: 2}
+  - {fileID: 11400000, guid: b82ba0ea611142746b19ce2547b77012, type: 2}
+  - {fileID: 11400000, guid: 790c1c813e7891c45861397fa0d3e0ab, type: 2}
   chunksDisponibles:
-  - {fileID: 11400000, guid: b85bf8b3031204f46b30681c495f8192, type: 2}
   - {fileID: 11400000, guid: edc8a0cdebf9c8f46bd5689b8d0ef328, type: 2}
+  - {fileID: 11400000, guid: b85bf8b3031204f46b30681c495f8192, type: 2}
   - {fileID: 11400000, guid: e215b5ba7a224fe44a39b8ef31435edb, type: 2}
   - {fileID: 11400000, guid: 5680bc5463232c94c8774e042d53b40e, type: 2}
   - {fileID: 11400000, guid: 902e79745b9b20e45b0e8e52880a6b91, type: 2}
+  - {fileID: 11400000, guid: 9e19f16145c284f4fba5dbaddcd6121b, type: 2}
+  - {fileID: 11400000, guid: 382429f8c501e5e419c7b66504cde109, type: 2}
+  - {fileID: 11400000, guid: c802b603099571c48905c6dcadbc49f7, type: 2}
+  - {fileID: 11400000, guid: 76289df38adada1418d75158da86d524, type: 2}
   - {fileID: 11400000, guid: bb47f6c92f4c3ba4fa74180766e0db14, type: 2}
   - {fileID: 11400000, guid: 5ead3997885b70245a5d185b489e00b5, type: 2}
+  - {fileID: 11400000, guid: 10173a5055e7894479aa982b19ae7c50, type: 2}
+  - {fileID: 11400000, guid: 07f649d73bf14084d85da7adbe3a7652, type: 2}
   - {fileID: 11400000, guid: 6acf3c70261c1cf4b87208b949818eff, type: 2}
+  - {fileID: 11400000, guid: ff1e002dd9ef6aa4b9dea47fc53f65af, type: 2}
+  - {fileID: 11400000, guid: 762ce2fe01c2341499f84c0a5b3d6fff, type: 2}
+  - {fileID: 11400000, guid: 91eb896b7897f2a43abe3e27a66c0f12, type: 2}
+  - {fileID: 11400000, guid: e58b04e3a98aaee4e9295245b6a86150, type: 2}
+  - {fileID: 11400000, guid: fcf14b9f0723d554ca6916b884fede9c, type: 2}
   - {fileID: 11400000, guid: df3a40a10b3a1ae4d9562d6e4913f303, type: 2}
   - {fileID: 11400000, guid: 243a6f1ea106e084aa70a0dcc2eb3273, type: 2}
   - {fileID: 11400000, guid: 1169b31398e623944bfa9e139a171eb7, type: 2}
   - {fileID: 11400000, guid: 5577fa3873f1dd14e92bbc1477b51559, type: 2}
+  - {fileID: 11400000, guid: 8b60f9aea1ac6904b9d1760e3b6542a5, type: 2}
+  - {fileID: 11400000, guid: 2b31e196f93fdfd4286624bd26405da3, type: 2}
   globalGridSize: 80
   nombreDeChunksAGenerer: 8
-  activeSpawns: []
   baseNoyauCoords: {x: 0, y: 0}
 --- !u!1 &378692237
 GameObject:
@@ -1202,6 +1217,7 @@ GameObject:
   m_Component:
   - component: {fileID: 866862672}
   - component: {fileID: 866862671}
+  - component: {fileID: 866862673}
   m_Layer: 0
   m_Name: WaveManager
   m_TagString: Untagged
@@ -1238,6 +1254,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 709654392}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &866862673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866862670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e3e536b68839c841a1803e8a77f3472, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnDirector
+  weightPerChunkId: 5
+  weightPerCellDistance: 1
+  tiers:
+  - tierName: Tier 1
+    minThreatScore: 0
+    profiles:
+    - {fileID: 11400000, guid: ff37c06f1f13f0445b9ee5b1390cc70d, type: 2}
+  - tierName: Tier 2
+    minThreatScore: 40
+    profiles:
+    - {fileID: 11400000, guid: f1099cea4879bb7458d1765ca25061d3, type: 2}
 --- !u!1 &870254057
 GameObject:
   m_ObjectHideFlags: 0
