@@ -23,21 +23,36 @@ public static class GameEvents
     public static void TriggerGridChanged() => OnGridChanged?.Invoke();  
     public static void TriggerPathUpdated(List<Node> path) => OnPathUpdated?.Invoke(path);  
     public static void TriggerObstacleToggled(Vector3Int position, bool isPlaced) => OnObstacleToggled?.Invoke(position, isPlaced);  
-    public static event Action OnEnemySpawned;
-    public static event Action OnEnemyRemoved;
-    public static void TriggerEnemySpawned() => OnEnemySpawned?.Invoke();
-    public static void TriggerEnemyRemoved() => OnEnemyRemoved?.Invoke();
+    
+    // GESTION DES ENNEMIS
+    public static event Action<EnemyCore> OnEnemySpawned;
+    public static event Action<EnemyCore> OnEnemyRemoved;
+    public static void TriggerEnemySpawned(EnemyCore enemy) => OnEnemySpawned?.Invoke(enemy);
+    public static void TriggerEnemyRemoved(EnemyCore enemy) => OnEnemyRemoved?.Invoke(enemy);
     
     //GESTION DES VAGUES
     public static event Action<int> OnWaveStarted;
     public static void TriggerWaveStarted(int waveNumber) => OnWaveStarted?.Invoke(waveNumber);
+    public static event Action<int> OnWaveNumberChanged;
+    public static void TriggerWaveNumberChanged(int waveNumber) => OnWaveNumberChanged?.Invoke(waveNumber);
 
     public static event Action OnSpawnerFinished;
     public static void TriggerSpawnerFinished() => OnSpawnerFinished?.Invoke();
+    
+    // GESTION DE LA BASE ET GAME OVER
+    public static event Action<int> OnBaseDamaged;
+    public static void TriggerBaseDamaged(int damageAmount) => OnBaseDamaged?.Invoke(damageAmount);
+
+    public static event Action<int, int> OnBaseHealthChanged;
+    public static void TriggerBaseHealthChanged(int currentHealth, int maxHealth) => OnBaseHealthChanged?.Invoke(currentHealth, maxHealth);
+
+    public static event Action OnGameOver;
+    public static void TriggerGameOver() => OnGameOver?.Invoke();
 }
 
 public enum GameState
 {
     PreparationPhase,
-    ActionPhase
+    ActionPhase,
+    GameOver
 }

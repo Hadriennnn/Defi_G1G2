@@ -16,3 +16,4 @@ MonoBehaviour:
   baseHealth: 50
   baseArmor: 5
   baseSpeed: 1
+  coreDamage: 3

@@ -16,6 +16,7 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
     private EnemyStatusManager statusManager;
     
     public event Action OnDeath;
+    public event Action<float, float> OnHealthChanged; 
 
     void Awake()
     {
@@ -35,21 +36,23 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
 
     void Start()
     {
-        GameEvents.TriggerEnemySpawned();
+        GameEvents.TriggerEnemySpawned(this); // On s'envoie nous-même !
     }
 
     void OnDestroy()
     {
-        GameEvents.TriggerEnemyRemoved();
+        GameEvents.TriggerEnemyRemoved(this);
     }
 
-    // Le payload est maintenant un struct, il est passé par valeur (copie)
     public void ReceivePayload(HitPayload payload)
     {
         if (isDead) return;
 
         float finalDamage = Mathf.Max(1f, payload.rawDamage - Armor.Value);
         currentHealth -= finalDamage;
+
+        //On prévient la barre de vie de se mettre à jour
+        OnHealthChanged?.Invoke(currentHealth, MaxHealth.Value);
 
         if (payload.effectsToApply != null && statusManager != null)
         {
@@ -73,8 +76,6 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
 
         OnDeath?.Invoke();
 
-        // CORRECTION ICI : fatalPayload étant un struct, il ne peut pas être null.
-        // On vérifie directement si l'instigateur (le GameObject de la tour) existe bien.
         if (fatalPayload.instigator != null)
         {
             BasicTower tower = fatalPayload.instigator.GetComponent<BasicTower>();
@@ -91,6 +92,9 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
     {
         if (isDead) return;
         isDead = true;
+        
+        int damageToDeal = (data != null) ? data.coreDamage : 1;
+        GameEvents.TriggerBaseDamaged(damageToDeal);
         
         Destroy(gameObject);
     }

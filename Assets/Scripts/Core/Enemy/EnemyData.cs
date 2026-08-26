@@ -12,4 +12,7 @@ public class EnemyData : ScriptableObject
     public float baseHealth = 100f;
     public float baseArmor = 5f;
     public float baseSpeed = 3f;
+    
+    [Tooltip("Dégâts infligés au Noyau si l'ennemi atteint la base")]
+    public int coreDamage = 1;
 }

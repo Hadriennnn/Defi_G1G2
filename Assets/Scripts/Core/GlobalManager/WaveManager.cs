@@ -19,16 +19,16 @@ public class WaveManager : MonoBehaviour
     void OnEnable()
     {
         GameEvents.OnGameStateChanged += GererChangementPhase;
-        GameEvents.OnEnemySpawned += GererApparitionEnnemi;
-        GameEvents.OnEnemyRemoved += GererMortEnnemi;
+        GameEvents.OnEnemySpawned += (enemy) => activeEnemyCount++; 
+        GameEvents.OnEnemyRemoved += (enemy) => GererMortEnnemi(); 
         GameEvents.OnSpawnerFinished += GererFinSpawner;
     }
 
     void OnDisable()
     {
         GameEvents.OnGameStateChanged -= GererChangementPhase;
-        GameEvents.OnEnemySpawned -= GererApparitionEnnemi;
-        GameEvents.OnEnemyRemoved -= GererMortEnnemi;
+        GameEvents.OnEnemySpawned -= (enemy) => activeEnemyCount++;
+        GameEvents.OnEnemyRemoved -= (enemy) => GererMortEnnemi(); 
         GameEvents.OnSpawnerFinished -= GererFinSpawner;
     }
 
@@ -50,10 +50,11 @@ public class WaveManager : MonoBehaviour
     {
         if (state == GameState.PreparationPhase)
         {
-            // NOUVEAU : Logique de déblocage des Chunks
+            // Ca c'est pour l'UI. Et pas pour les ennemis 
+            GameEvents.TriggerWaveNumberChanged(currentWaveIndex);
+
             if (chunkUnlockInterval > 0 && currentWaveIndex > 1)
             {
-                // Si on a passé le bon nombre de vagues, on débloque le chunk suivant
                 if ((currentWaveIndex - 1) % chunkUnlockInterval == 0)
                 {
                     Debug.Log($"[WaveManager] Vague {currentWaveIndex} atteinte : Déblocage du Chunk {nextChunkIdToUnlock} !");
@@ -70,11 +71,12 @@ public class WaveManager : MonoBehaviour
 
             if (activeSpawnersCount == 0)
             {
-                Debug.LogWarning("[WaveManager] Aucun portail actif trouvé ! Fin de vague immédiate.");
+                Debug.LogWarning("[WaveManager] Aucun portail actif trouvé ");
                 VerifierFinDeVague();
                 return;
             }
 
+            // ICI, on réveille les spawners pour qu'ils crachent les monstres !
             GameEvents.TriggerWaveStarted(currentWaveIndex);
         }
     }

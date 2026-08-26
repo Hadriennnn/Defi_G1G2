@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/*
- * RÉSUMÉ : Singleton central qui gère l'état global de la partie (PreparationPhase vs ActionPhase).
- */
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -11,14 +8,18 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+
+    void OnEnable()
+    {
+        GameEvents.OnGameOver += HandleGameOver;
+    }
+
+    void OnDisable()
+    {
+        GameEvents.OnGameOver -= HandleGameOver;
     }
 
     public void Init()
@@ -28,12 +29,20 @@ public class GameManager : MonoBehaviour
 
     public void LancerPhaseAction()
     {
+        if (CurrentState == GameState.GameOver) return;
         ChangerEtat(GameState.ActionPhase);
     }
 
     public void RelancerPhasePreparation()
     {
+        if (CurrentState == GameState.GameOver) return;
         ChangerEtat(GameState.PreparationPhase);
+    }
+
+    private void HandleGameOver()
+    {
+        ChangerEtat(GameState.GameOver);
+        // écran de défaite ici
     }
 
     private void ChangerEtat(GameState nouvelEtat)
