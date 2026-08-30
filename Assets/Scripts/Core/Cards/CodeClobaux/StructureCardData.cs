@@ -5,6 +5,9 @@ public class StructureCardData : CardData
 {
     [Header("Données de Structure")]
     public GameObject chassisPrefab; 
+    
+    [Tooltip("Si vrai, la carte reste sélectionnée après utilisation pour en poser plusieurs de suite (ex: Murs).")]
+    public bool isMultiCast = false;
 
     public override bool TryPlayCard(Vector2Int targetCoords, PlacementManager context)
     {
@@ -22,7 +25,7 @@ public class StructureCardData : CardData
 
         if (context.IsEnemyOnCell(cellCenter))
         {
-            Debug.LogWarning("Placement impossible : Un ennemi se trouve sur cette case !");
+            Debug.LogWarning("Placement impossible : Un ennemi se trouve sur cette case");
             return false;
         }
 
@@ -31,7 +34,6 @@ public class StructureCardData : CardData
         {  
             clickedNode.isWalkable = true;  
             context.Pathfinder.CheckAllPaths(); 
-            Debug.LogWarning("Placement impossible : bloque la sortie !");
             return false;  
         }
 

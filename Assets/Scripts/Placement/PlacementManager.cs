@@ -155,15 +155,31 @@ public class PlacementManager : MonoBehaviour
 
         if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(inputCoords)) return; 
 
-        // MAGIE DU POLYMORPHISME : On demande à la carte de se jouer elle-même !
         if (activeCard.TryPlayCard(inputCoords, this))
         {
-            DeckManager.Instance.DiscardCard(activeCard);
-            DeselectCard();
-        }
-    }  
+            bool keepInHand = false;
 
-    // --- METHODES UTILITAIRES POUR LES CARTES ---
+            if (activeCard is StructureCardData structureCard)
+            {
+                if (structureCard.isMultiCast && activeCard.currentCharges > 1)
+                {
+                    keepInHand = true;
+                    activeCard.currentCharges--; 
+                    
+                    // NOUVEAU : On prévient l'UI que la charge de cette carte a changé !
+                    GameEvents.TriggerCardChargesUpdated(activeCard);
+                }
+            }
+
+            if (!keepInHand)
+            {
+                DeckManager.Instance.UseCardAndDiscard(activeCard);
+                DeselectCard();
+            }
+        }
+    }
+
+    //METHODES UTILITAIRES POUR LES CARTES
 
     public Vector3 GetWorldPosition(Vector2Int coords)
     {

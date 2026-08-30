@@ -2,23 +2,25 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class DeckManager : MonoBehaviour
 {
     public static DeckManager Instance { get; private set; }
 
     [Header("Configuration du Deck")]
-    [Tooltip("La liste des cartes (ScriptableObjects) avec lesquelles le joueur commence la partie.")]
     public List<CardData> startingDeck; 
-    
-    [Tooltip("La taille maximale de la main du joueur.")]
     public int maxHandSize = 6; 
+    
+    [Header("Coûts (Balatro)")]
+    public int mulliganEnergyCost = 1; // Coût de base pour défausser/repiocher
 
+    // Les Piles de Cartes
     private List<CardData> drawPile = new List<CardData>();
     private List<CardData> hand = new List<CardData>();
     private List<CardData> discardPile = new List<CardData>();
+    private List<CardData> exhaustedPile = new List<CardData>(); // Cartes détruites pour l'Acte
+    private List<CardData> armedSpells = new List<CardData>();   // Sorts en attente
 
-    // --- HOOKS POUR L'UI ---
+    // UI
     public event Action<CardData> OnCardDrawn;
     public event Action<CardData> OnCardDiscarded;
     public event Action OnDeckReshuffled;
@@ -31,44 +33,41 @@ public class DeckManager : MonoBehaviour
 
     void Start()
     {
-        InitializeDeck();
-        
+        InitializeDeckForNewAct();
         DrawHand();
     }
 
-    void OnEnable()
-    {
-        GameEvents.OnGameStateChanged += HandleGameStateChanged;
-    }
-
-    void OnDisable()
-    {
-        GameEvents.OnGameStateChanged -= HandleGameStateChanged;
-    }
+    void OnEnable() { GameEvents.OnGameStateChanged += HandleGameStateChanged; }
+    void OnDisable() { GameEvents.OnGameStateChanged -= HandleGameStateChanged; }
 
     private void HandleGameStateChanged(GameState state)
     {
         if (state == GameState.PreparationPhase)
         {
-            // Début du tour de construction on refait sa main 
             DrawHand();
         }
         else if (state == GameState.ActionPhase)
         {
-            // Début du combat on défausse toutes les cartes qu'on n'a pas pu ou voulu jouer
             DiscardEntireHand();
         }
     }
 
-
-    public void InitializeDeck()
+    // On clone les cartes pour ne pas détruire les assets de bases que j'ai fait 
+    public void InitializeDeckForNewAct()
     {
         drawPile.Clear();
         hand.Clear();
         discardPile.Clear();
+        exhaustedPile.Clear();
+        armedSpells.Clear();
 
-        // On clone le deck de départ dans la pioche pour ne pas altérer le deck de base
-        drawPile.AddRange(startingDeck);
+        foreach (CardData baseCard in startingDeck)
+        {
+            CardData clonedCard = Instantiate(baseCard); 
+            clonedCard.ResetCard(); // Met currentCharges = maxCharges
+            drawPile.Add(clonedCard);
+        }
+        
         Shuffle(drawPile);
     }
 
@@ -79,53 +78,99 @@ public class DeckManager : MonoBehaviour
         {
             DrawSingleCard();
         }
-        Debug.Log($"[DeckManager] Nouvelle Main piochée. Cartes en main : {hand.Count}, Pioche : {drawPile.Count}");
+        Debug.Log($"[DeckManager] Main piochée. Main: {hand.Count}, Pioche: {drawPile.Count}");
     }
 
     public void DrawSingleCard()
     {
-        if (hand.Count >= maxHandSize)
-        {
-            return;
-        }
+        if (hand.Count >= maxHandSize) return;
 
-        // Si la pioche est vide on re mélange la défausse
         if (drawPile.Count == 0)
         {
             if (discardPile.Count == 0) return; 
             ReshuffleDiscardIntoDraw();
         }
 
-        // On prend la première carte 
         CardData drawnCard = drawPile[0];
         drawPile.RemoveAt(0);
         hand.Add(drawnCard);
 
-        // On prévient l'UI de dessiner cette carte à l'écran
         OnCardDrawn?.Invoke(drawnCard);
     }
 
-    public void DiscardCard(CardData card)
+    // CHARGES ICI 
+    
+    // Appelée par le PlacementManager quand une carte est jouée sur le plateau
+    public void UseCardAndDiscard(CardData card)
     {
-        if (hand.Contains(card))
+        if (!hand.Contains(card)) return;
+
+        card.currentCharges--;
+        Debug.Log($"[DeckManager] Carte jouée : {card.nomCarte}. Charges restantes : {card.currentCharges}");
+
+        hand.Remove(card);
+        OnCardDiscarded?.Invoke(card); // UI
+
+        // exhaust ici 
+        if (card.currentCharges <= 0)
         {
-            hand.Remove(card);
+            Debug.Log($"[DeckManager] {card.nomCarte} ÉPUISÉE (Détruite pour l'Acte) !");
+            exhaustedPile.Add(card);
+        }
+        else
+        {
             discardPile.Add(card);
-            
-            // On prévient l'UI de détruire le visuel de cette carte
-            OnCardDiscarded?.Invoke(card);
         }
     }
 
+    // Appelée à la fin de la phase de prépa
     public void DiscardEntireHand()
     {
-        // On crée une copie temporaire pour pouvoir supprimer des éléments dans la boucle
         List<CardData> tempHand = new List<CardData>(hand);
         foreach (CardData card in tempHand)
         {
-            DiscardCard(card);
+            hand.Remove(card);
+            discardPile.Add(card); // On défausse sans retirer de charge
+            OnCardDiscarded?.Invoke(card);
         }
-        Debug.Log($"[DeckManager] Main défaussée. Défausse totale : {discardPile.Count}");
+        Debug.Log($"[DeckManager] Main défaussée. Défausse : {discardPile.Count}");
+    }
+
+    // MULLIGAN
+    
+    public bool TryMulligan(List<CardData> selectedCards)
+    {
+        if (selectedCards.Count == 0) return false;
+
+        // On vérifie si on a l'énergie
+        if (!EnergyManager.Instance.TrySpendEnergy(mulliganEnergyCost))
+        {
+            return false;
+        }
+
+        Debug.Log($"[DeckManager] Mulligan effectué pour {mulliganEnergyCost} énergie. {selectedCards.Count} cartes changées.");
+
+        // On défausse les cartes sélectionnées
+        foreach (CardData card in selectedCards)
+        {
+            if (hand.Contains(card))
+            {
+                hand.Remove(card);
+                discardPile.Add(card);
+                OnCardDiscarded?.Invoke(card);
+            }
+        }
+
+        // On repioche le même nombre
+        for (int i = 0; i < selectedCards.Count; i++)
+        {
+            DrawSingleCard();
+        }
+
+        // Si je voudrais augmenté le coup à chaque fois 
+        // mulliganEnergyCost++; 
+
+        return true;
     }
 
     private void ReshuffleDiscardIntoDraw()
@@ -134,10 +179,8 @@ public class DeckManager : MonoBehaviour
         discardPile.Clear();
         Shuffle(drawPile);
         OnDeckReshuffled?.Invoke();
-        Debug.Log("Pioche vide La défausse a été mélangée");
     }
 
-    // L'algorithme standard pour mélanger une liste (Fisher-Yates Shuffle) choppé sur Internet
     private void Shuffle(List<CardData> list)
     {
         for (int i = 0; i < list.Count; i++)
@@ -149,9 +192,5 @@ public class DeckManager : MonoBehaviour
         }
     }
     
-    public List<CardData> GetHand()
-    {
-        return hand;
-    }
-    
+    public List<CardData> GetHand() => hand;
 }

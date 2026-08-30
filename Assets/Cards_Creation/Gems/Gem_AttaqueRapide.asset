@@ -17,3 +17,6 @@ MonoBehaviour:
   description: augmente la vitesse de tire de la tour
   cost: 2
   icon: {fileID: 0}
+  maxCharges: 2
+  currentCharges: 0
+  gemCategory: 1

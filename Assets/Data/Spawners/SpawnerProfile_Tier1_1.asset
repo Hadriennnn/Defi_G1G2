@@ -20,7 +20,7 @@ MonoBehaviour:
   regularSpawns:
   - ruleName: basicEnnemi
     enemyPrefab: {fileID: 4963533562085925753, guid: 7180b0b60865ae045bac0f2674b6b922, type: 3}
-    baseQuantity: 3
+    baseQuantity: 1
     incrementPerWave: 1
     spawnDelay: 0.3
   milestoneSpawns: []

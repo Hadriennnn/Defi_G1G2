@@ -16,10 +16,10 @@ public class GridVisualizer : MonoBehaviour
     
     [Header("Configuration Entrée / Sortie")]
     public GameObject tuileEntreePrefab;  
-    public float offsetRotationEntree = 0f; // NOUVEAU
+    public float offsetRotationEntree = 0f; 
     
     public GameObject tuileSortiePrefab;  
-    public float offsetRotationSortie = 0f; // NOUVEAU
+    public float offsetRotationSortie = 0f; 
     
     [Header("Kit de Tuiles Modulaires (Chemin)")]  
     public GameObject tilePathStraight;
@@ -85,16 +85,16 @@ public class GridVisualizer : MonoBehaviour
                     if (isTopBlock)
                     {
                         GameObject prefabADessiner = tuileSolPrefab;
-                        float yRotationOffset = 0f; // NOUVEAU : On prépare la rotation
+                        float yRotationOffset = 0f; 
 
-                        // 1. GESTION DE L'ENTRÉE
+                        // GESTION DE L'ENTRÉE
                         if (LevelManager.Instance.spawnPoints.Contains(new Vector2Int(x, y)) && tuileEntreePrefab != null)
                         {
                             prefabADessiner = tuileEntreePrefab;
                             yRotationOffset = offsetRotationEntree; // On applique l'offset
                         }
                         
-                        // 2. GESTION DE LA BASE 2x2
+                        // GESTION DE LA BASE 2x2
                         bool isBaseRoot = (x == ChunkManager.Instance.baseNoyauCoords.x && y == ChunkManager.Instance.baseNoyauCoords.y);
                         bool isPartOfBase = LevelManager.Instance.GetBaseCoords().Contains(new Vector2Int(x, y));
 
@@ -108,7 +108,6 @@ public class GridVisualizer : MonoBehaviour
                         }
                         else if (isPartOfBase)
                         {
-                            // CORRECTION : On ne dessine PLUS RIEN sur les 3 autres cases de la base
                             prefabADessiner = null; 
                         }
 
@@ -121,7 +120,7 @@ public class GridVisualizer : MonoBehaviour
                             GameObject solInstancie = Instantiate(prefabADessiner, position, finalRotation, transform);
                             tuilesSolMemoire[x, y] = solInstancie;
 
-                            // On donne les coordonnées ET le Chunk ID au portail
+                            // On donne les coordonnées et le Chunk ID au portail
                             if (prefabADessiner == tuileEntreePrefab)
                             {
                                 EnemySpawner spawner = solInstancie.GetComponent<EnemySpawner>();
@@ -156,8 +155,20 @@ public class GridVisualizer : MonoBehaviour
 
     public void DrawPath(List<Node> path)  
     {  
-        foreach (GameObject objet in objetsChemin) { Destroy(objet); }
+        // On passe par le poolManager car j'ai eu bcpppp de lag lors de la prévisualtion 
+        foreach (GameObject objet in objetsChemin) 
+        { 
+            if (objet.TryGetComponent<PooledItem>(out PooledItem poolItem))
+            {
+                poolItem.ReleaseToPool();
+            }
+            else
+            {
+                Destroy(objet); // Sécurité au cas où l'objet n'a pas le composant
+            }
+        }
         objetsChemin.Clear();
+        // ...
 
         if (tuilesSolMemoire != null)
         {
@@ -215,7 +226,10 @@ public class GridVisualizer : MonoBehaviour
                 float rotationFinaleY = rotationY + rotationDOrigine.y + currentOffset;
                 Quaternion rotation = Quaternion.Euler(rotationDOrigine.x, rotationFinaleY, rotationDOrigine.z);
                 
-                GameObject cheminObj = Instantiate(prefabToInstantiate, position, rotation, transform);
+                // On instantie depuis le poolManager du coup
+                GameObject cheminObj = PoolManager.Instance.Spawn(prefabToInstantiate, position, rotation);
+                cheminObj.transform.SetParent(transform); 
+                
                 objetsChemin.Add(cheminObj);
 
                 tuilesSolMemoire[n.gridX, n.gridY].SetActive(false);

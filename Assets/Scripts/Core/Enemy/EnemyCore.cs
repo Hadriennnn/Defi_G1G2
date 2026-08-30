@@ -50,8 +50,11 @@ public class EnemyCore : MonoBehaviour, IStatusReceiver
 
         float finalDamage = Mathf.Max(1f, payload.rawDamage - Armor.Value);
         currentHealth -= finalDamage;
+        
+        // Visuel dégat
+        Vector3 popupPos = transform.position + new Vector3(0, 0.2f, 0); // Légèrement au-dessus de la tête
+        GameEvents.TriggerDamagePopup(popupPos, finalDamage, payload.element, payload.isCritical);
 
-        //On prévient la barre de vie de se mettre à jour
         OnHealthChanged?.Invoke(currentHealth, MaxHealth.Value);
 
         if (payload.effectsToApply != null && statusManager != null)

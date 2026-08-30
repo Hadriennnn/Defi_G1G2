@@ -48,6 +48,20 @@ public static class GameEvents
 
     public static event Action OnGameOver;
     public static void TriggerGameOver() => OnGameOver?.Invoke();
+    
+    // DOMMAGE ET POP UP
+    public static event Action<Vector3, float, ElementType, bool> OnDamagePopupRequested;
+    
+    public static void TriggerDamagePopup(Vector3 position, float amount, ElementType element, bool isCrit) 
+        => OnDamagePopupRequested?.Invoke(position, amount, element, isCrit);
+    
+    // GESTION DU DECK ET MULLIGAN 
+    public static event Action<bool> OnMulliganModeToggled;
+    public static void TriggerMulliganModeToggled(bool isEnabled) => OnMulliganModeToggled?.Invoke(isEnabled);
+    
+    // CHARGES DES CARTES 
+    public static event Action<CardData> OnCardChargesUpdated;
+    public static void TriggerCardChargesUpdated(CardData card) => OnCardChargesUpdated?.Invoke(card);
 }
 
 public enum GameState

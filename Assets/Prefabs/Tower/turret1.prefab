@@ -142,8 +142,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicTower
   baseRange: 5
-  baseFireRate: 2
-  initialDamage: 5
+  baseFireRate: 5
+  initialDamage: 2
   Range:
     baseValue: 0
   FireRate:

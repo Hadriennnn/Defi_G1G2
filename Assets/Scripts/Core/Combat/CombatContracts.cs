@@ -15,6 +15,7 @@ public struct HitPayload
     public ElementType element;
     public GameObject instigator; 
     public List<StatusEffect> effectsToApply; 
+    public bool isCritical; // plus tard mais au cas où
 }
 
 public interface IStatusReceiver

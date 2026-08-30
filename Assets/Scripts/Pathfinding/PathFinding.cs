@@ -19,6 +19,7 @@ public class Pathfinding : MonoBehaviour, IPathfinder
     private HashSet<PathNode> closedSet = new HashSet<PathNode>();
     private Heap<PathNode> openSet;
     private int currentSearchId = 0;
+    private HashSet<PathNode> cachedTargetNodes = new HashSet<PathNode>();
 
     public void Init()  
     {  
@@ -58,6 +59,7 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         Dictionary<Vector2Int, List<Node>> temporaryPaths = new Dictionary<Vector2Int, List<Node>>();
         HashSet<Node> routesExistantes = new HashSet<Node>(); 
 
+        
         foreach (Vector2Int spawnCoord in LevelManager.Instance.spawnPoints)
         {
             if (!gridData.Grid[spawnCoord.x, spawnCoord.y].isActive) continue;
@@ -74,10 +76,26 @@ public class Pathfinding : MonoBehaviour, IPathfinder
             }
         }
 
+        // on vérifie toutes les portes
+        if (ChunkManager.Instance != null)
+        {
+            foreach (Vector2Int doorPos in ChunkManager.Instance.allDoorsPositions)
+            {
+                if (!gridData.Grid[doorPos.x, doorPos.y].isActive) continue;
+
+                List<Node> pathForDoor = FindSinglePath(doorPos, LevelManager.Instance.GetBaseCoords(), routesExistantes);
+                
+                if (pathForDoor == null) 
+                {
+                    // Interdit de boucher une porte
+                    return false; 
+                }
+            }
+        }
+
         derniersCheminsValides = temporaryPaths;
         GameEvents.TriggerPathUpdated(routesExistantes.ToList()); 
         
-        // CORRECTION : On enregistre les waypoints IMMÉDIATEMENT pour que les portails y aient accès !
         Vector3 origineGrille = transform.position; 
         foreach (var kvp in derniersCheminsValides)
         {
@@ -100,6 +118,7 @@ public class Pathfinding : MonoBehaviour, IPathfinder
 
         return true;
     }
+
     private void PrepareNode(PathNode node)
     {
         if (node.searchId != currentSearchId)
@@ -114,6 +133,8 @@ public class Pathfinding : MonoBehaviour, IPathfinder
 
     private List<Node> FindSinglePath(Vector2Int startPos, List<Vector2Int> targetPositions, HashSet<Node> preferredNodes)  
     {  
+        if (!pathGrid[startPos.x, startPos.y].GridNode.isWalkable) return null;
+
         currentSearchId++;
         openSet.Clear();
         closedSet.Clear();
@@ -121,12 +142,12 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         PathNode startNode = pathGrid[startPos.x, startPos.y];  
         PrepareNode(startNode);
 
-        HashSet<PathNode> targetNodes = new HashSet<PathNode>();
+        cachedTargetNodes.Clear();
         foreach (Vector2Int pos in targetPositions)
         {
             PathNode tNode = pathGrid[pos.x, pos.y];
             PrepareNode(tNode);
-            targetNodes.Add(tNode);
+            cachedTargetNodes.Add(tNode);
         }
 
         startNode.gCost = 0;  
@@ -137,10 +158,10 @@ public class Pathfinding : MonoBehaviour, IPathfinder
             PathNode currentNode = openSet.RemoveFirst();  
             closedSet.Add(currentNode);  
 
-            if (targetNodes.Contains(currentNode))  
+            if (cachedTargetNodes.Contains(currentNode))  
             {  
                 return RetracePath(startNode, currentNode);  
-            }  
+            }
 
             GetNeighborsNonAlloc(currentNode, cachedNeighbors);
 
@@ -155,7 +176,7 @@ public class Pathfinding : MonoBehaviour, IPathfinder
                 }  
 
                 int coutDeBase = 10; 
-                if (preferredNodes.Contains(neighbor.GridNode)) coutDeBase = 2; 
+                if (preferredNodes.Contains(neighbor.GridNode)) coutDeBase = 8;         
 
                 int newMovementCostToNeighbor = currentNode.gCost + coutDeBase;  
 
@@ -213,7 +234,6 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         int dstY = Mathf.Abs(nodeA.GridNode.gridY - nodeB.GridNode.gridY);  
         return dstX + dstY;  
     }  
-    
 }
 
 public class PathNode : IHeapItem<PathNode>  

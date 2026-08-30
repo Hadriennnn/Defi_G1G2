@@ -20,7 +20,7 @@ MonoBehaviour:
   regularSpawns:
   - ruleName: Tier2
     enemyPrefab: {fileID: 4963533562085925753, guid: a22d55a97c476b54ab0af176436594e0, type: 3}
-    baseQuantity: 3
+    baseQuantity: 1
     incrementPerWave: 1
     spawnDelay: 0.3
   milestoneSpawns:

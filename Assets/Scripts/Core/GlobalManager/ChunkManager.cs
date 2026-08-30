@@ -14,26 +14,23 @@ public class ChunkManager : MonoBehaviour
     public static ChunkManager Instance { get; private set; }
 
     [Header("Bibliothèque de Chunks")]
-    [Tooltip("Les bases possibles. Une seule sera tirée au hasard au démarrage.")]
     public List<ChunkData> basesDisponibles; 
-    [Tooltip("Les blocs de chemin normaux.")]
     public List<ChunkData> chunksDisponibles;
 
     [Header("Paramètres du Monde")]
     public int globalGridSize = 50;
-    
-    [Header("Nombre de chunk à générer")]
-    [Tooltip("Combien de Chunks supplémentaires l'algorithme doit-il coller à la base pour créer cet Acte ?")]
     public int nombreDeChunksAGenerer = 4;
 
-    // --- LES DONNÉES CUITES (Baking) ---
+    // baking
     public int[,] bakedElevation;
     public int[,] bakedChunkIds;
     
-    // --- LES LISTES DYNAMIQUES ---
+    // liste dyna
     public Dictionary<Vector2Int, SpawnerProfile> activeSpawns = new Dictionary<Vector2Int, SpawnerProfile>();
     public Vector2Int baseNoyauCoords;
-    private List<GlobalSocket> openDoors = new List<GlobalSocket>();
+    public List<GlobalSocket> openDoors = new List<GlobalSocket>();
+    
+    public List<Vector2Int> allDoorsPositions = new List<Vector2Int>();
 
     private int currentChunkIdCounter = 1;
 
@@ -45,6 +42,12 @@ public class ChunkManager : MonoBehaviour
 
     public void GenererMondeInitial()
     {
+        // Sécurité : on nettoie les listes au cas où on relance une partie
+        activeSpawns.Clear();
+        openDoors.Clear();
+        allDoorsPositions.Clear();
+        currentChunkIdCounter = 1;
+
         bakedElevation = new int[globalGridSize, globalGridSize];
         bakedChunkIds = new int[globalGridSize, globalGridSize];
 
@@ -57,7 +60,6 @@ public class ChunkManager : MonoBehaviour
             }
         }
 
-        // TIRAGE AU SORT DE LA BASE
         if (basesDisponibles != null && basesDisponibles.Count > 0)
         {
             ChunkData chunkDeBase = basesDisponibles[Random.Range(0, basesDisponibles.Count)];
@@ -65,10 +67,8 @@ public class ChunkManager : MonoBehaviour
             int offsetX = (globalGridSize / 2) - (chunkDeBase.largeur / 2);
             int offsetY = (globalGridSize / 2) - (chunkDeBase.hauteur / 2);
             
-            // Le Chunk de base reçoit toujours l'ID 1
             PlacerChunk(chunkDeBase, new Vector2Int(offsetX, offsetY));
             
-            // On génère immédiatement le reste de l'île (qui restera invisible jusqu'à son déblocage)
             for (int i = 0; i < nombreDeChunksAGenerer; i++)
             {
                 GenererNouveauChunk();
@@ -109,7 +109,6 @@ public class ChunkManager : MonoBehaviour
             }
         }
         
-        Debug.LogWarning("[ChunkManager] Impossible de placer un Chunk ici après 10 essais.");
         return false; 
     }
 
@@ -165,6 +164,11 @@ public class ChunkManager : MonoBehaviour
         {
             Vector2Int globalPos = offset + socket.localPosition;
 
+            if (socket.type == SocketType.Porte_Entree || socket.type == SocketType.Porte_Sortie)
+            {
+                allDoorsPositions.Add(globalPos);
+            }
+
             if (socket.type == SocketType.Porte_Entree)
             {
                 openDoors.Add(new GlobalSocket { position = globalPos, direction = socket.direction, type = socket.type, chunkId = chunkIdAssigne });
@@ -173,14 +177,12 @@ public class ChunkManager : MonoBehaviour
             {
                 SpawnerProfile profileToAssign = socket.spawnerProfile;
                 
-                // Si aucun profil n'est assigné en dur, on demande au SpawnDirector
                 if (profileToAssign == null && SpawnDirector.Instance != null)
                 {
                     float distance = Vector2Int.Distance(globalPos, baseNoyauCoords);
                     profileToAssign = SpawnDirector.Instance.GetRandomProfile(chunkIdAssigne, distance);
                 }
 
-                // On enregistre la position ET le profil
                 activeSpawns.Add(globalPos, profileToAssign);
             }
             else if (socket.type == SocketType.Noyau_Base)
@@ -216,9 +218,6 @@ public class ChunkManager : MonoBehaviour
         }
     }
 
-    // ==========================================
-    // OUTILS POUR LE DÉVELOPPEUR (ÉDITEUR ONLY)
-    // ==========================================
 #if UNITY_EDITOR
     [ContextMenu("Trier et Charger TOUS les Chunks des Assets")]
     public void AutoLoadChunks()
@@ -243,7 +242,6 @@ public class ChunkManager : MonoBehaviour
                 {
                     chunksDisponibles.Add(chunk);
                 }
-                // Si la catégorie est "Exclu", on l'ignore complètement
             }
         }
 

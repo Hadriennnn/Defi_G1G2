@@ -3,6 +3,8 @@ using UnityEngine;
 public class Gem_AttaqueRapide : IGemEffect
 {
     public string GemId => "AttaqueRapide_01";
+    public GemCategory Category => GemCategory.Amplificateur;
+    public ElementType Element => ElementType.Normal; // Un amplificateur n'a pas vraiment d'élément
     
     private StatModifier speedMod;
 
@@ -21,6 +23,8 @@ public class Gem_AttaqueRapide : IGemEffect
 public class Gem_NoyauIgnifere : IGemEffect
 {
     public string GemId => "NoyauIgnifere_01";
+    public GemCategory Category => GemCategory.Noyau;
+    public ElementType Element => ElementType.Feu; 
 
     public void Equip(BasicTower tower)
     {
@@ -32,13 +36,8 @@ public class Gem_NoyauIgnifere : IGemEffect
         tower.OnBeforeShoot -= ModifierColis;
     }
 
-    // NOUVEAU : On ajoute "ref" ici pour modifier le struct original
     private void ModifierColis(ref HitPayload payload)
     {
         payload.element = ElementType.Feu;
-        
-        // Exemple de comment tu feras plus tard pour ajouter un effet sans crasher :
-        // if (payload.effectsToApply == null) payload.effectsToApply = new System.Collections.Generic.List<StatusEffect>();
-        // payload.effectsToApply.Add(new BurnEffect(...));
     }
 }

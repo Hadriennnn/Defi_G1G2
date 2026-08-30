@@ -17,3 +17,6 @@ MonoBehaviour:
   description: Noyau Ignifere
   cost: 2
   icon: {fileID: 0}
+  maxCharges: 3
+  currentCharges: 0
+  gemCategory: 0

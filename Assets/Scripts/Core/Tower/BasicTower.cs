@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BasicTower : MonoBehaviour
@@ -23,11 +22,13 @@ public class BasicTower : MonoBehaviour
     [Header("Optimisation")]
     [SerializeField] private int maxEnemiesEvaluated = 20;
 
+    //La tour est éteinte par défaut 
+    public bool hasCore = false;
+
     private float fireCountdown = 0f;
     private Transform currentTarget;
     private Collider[] enemyHitBuffer;
 
-    //On crée un délégué spécifique avec "ref" pour que les gemmes puissent modifier le struct original
     public delegate void BeforeShootHandler(ref HitPayload payload);
     public event BeforeShootHandler OnBeforeShoot; 
     
@@ -44,6 +45,9 @@ public class BasicTower : MonoBehaviour
 
     void Update()
     {
+        //On ne fait rien si la tour n'a pas de Noyau
+        if (!hasCore) return;
+
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameState.PreparationPhase) return;
 
         fireCountdown -= Time.deltaTime;
@@ -80,17 +84,15 @@ public class BasicTower : MonoBehaviour
 
     void Shoot()
     {
-        // OPTIMISATION : On n'instancie plus de nouvelle List<StatusEffect>() ici. 
-        // Par défaut, elle vaut null. Zéro allocation mémoire !
         HitPayload payload = new HitPayload 
         { 
             rawDamage = Damage.Value,
             element = ElementType.Normal,
             instigator = this.gameObject,
-            effectsToApply = null 
+            effectsToApply = null,
+            isCritical = false
         };
         
-        // On passe le payload par référence (ref)
         OnBeforeShoot?.Invoke(ref payload);
         
         GameObject projGO = PoolManager.Instance.Spawn(projectilePrefab, firePoint.position, firePoint.rotation);
@@ -108,6 +110,8 @@ public class BasicTower : MonoBehaviour
 
     public Transform GetCurrentTarget()
     {
+        // Si elle est éteinte, on renvoie null pour que la tourelle (TurretRotatorY) s'arrête de tourner
+        if (!hasCore) return null;
         return currentTarget;
     }
 

@@ -16,5 +16,8 @@ MonoBehaviour:
   nomCarte: Tour Gatling
   description: Tour de base
   cost: 2
-  icon: {fileID: 0}
-  chassisPrefab: {fileID: 1996272947337713647, guid: 5763922056b25fd4cb73fd60007ed5b4, type: 3}
+  icon: {fileID: -6500324324192947524, guid: 3775a4fd4294a534db2432bedc93b18a, type: 3}
+  maxCharges: 2
+  currentCharges: 0
+  chassisPrefab: {fileID: 5801013823405103989, guid: b62003da258bf274c96f409e21ab95b3, type: 3}
+  isMultiCast: 0

@@ -1,7 +1,16 @@
 using UnityEngine;
 
+public enum GemCategory 
+{ 
+    Noyau,          // Requis pour qu'une tour puisse tirer 
+    Amplificateur   // Optionnel, booste les stats 
+}
+
 public abstract class GemCardData : CardData
 {
+    [Header("Données de Gemme")]
+    public GemCategory gemCategory = GemCategory.Noyau;
+
     public abstract IGemEffect CreateGemEffect(); 
 
     public override bool TryPlayCard(Vector2Int targetCoords, PlacementManager context)
