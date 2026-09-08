@@ -23,6 +23,8 @@ public class PlacementManager : MonoBehaviour
 
     private CardInstance activeCard = null;
     public CardData debugCardToTest; 
+    private bool isProcessingCard = false;
+
 
     void Awake()  
     {  
@@ -149,25 +151,26 @@ public class PlacementManager : MonoBehaviour
         derniereCaseSurvolee = new Vector2Int(-1, -1);
     }
 
-    void TryPlayActiveCard()  
+    async void TryPlayActiveCard()  
     {  
-        Vector2Int inputCoords = derniereCaseSurvolee;
+        if (isProcessingCard) return;
 
+        Vector2Int inputCoords = derniereCaseSurvolee;
         if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(inputCoords)) return; 
 
-        // ON APPELLE TRYPLAYCARD SUR LA DATA
-        if (activeCard.Data.TryPlayCard(inputCoords, this))
+        isProcessingCard = true; // On verrouille l'action
+
+        // ON ATTEND LE RÉSULTAT ASYNCHRONE
+        if (await activeCard.Data.TryPlayCardAsync(inputCoords, this))
         {
             bool keepInHand = false;
 
             if (activeCard.Data is StructureCardData structureCard)
             {
-                // ON LIT LES DONNÉES SUR L'INSTANCE
                 if (structureCard.isMultiCast && activeCard.CurrentCharges > 1)
                 {
                     keepInHand = true;
                     activeCard.CurrentCharges--; 
-                    
                     GameEvents.TriggerCardChargesUpdated(activeCard);
                 }
             }
@@ -178,6 +181,8 @@ public class PlacementManager : MonoBehaviour
                 DeselectCard();
             }
         }
+        
+        isProcessingCard = false; // On déverrouille
     }
 
     public Vector3 GetWorldPosition(Vector2Int coords)

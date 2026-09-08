@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Threading.Tasks;
 
 [CreateAssetMenu(fileName = "NewStructureCard", menuName = "TowerDefense/Cards/Structure")]
 public class StructureCardData : CardData
@@ -9,7 +10,7 @@ public class StructureCardData : CardData
     [Tooltip("Si vrai, la carte reste sélectionnée après utilisation pour en poser plusieurs de suite (ex: Murs).")]
     public bool isMultiCast = false;
 
-    public override bool TryPlayCard(Vector2Int targetCoords, PlacementManager context)
+    public override async Task<bool> TryPlayCardAsync(Vector2Int targetCoords, PlacementManager context)
     {
         Node clickedNode = context.GridData.Grid[targetCoords.x, targetCoords.y];  
 
@@ -29,33 +30,34 @@ public class StructureCardData : CardData
             return false;
         }
 
+        if (!EnergyManager.Instance.HasEnoughEnergy(cost))
+        {
+            Debug.LogWarning("Placement impossible : Pas assez d'énergie !");
+            return false; 
+        }
+
         clickedNode.isWalkable = false;  
-        if (!context.Pathfinder.CheckAllPaths())  
+        
+        if (!await context.Pathfinder.CheckAllPathsAsync())  
         {  
             clickedNode.isWalkable = true;  
-            context.Pathfinder.CheckAllPaths(); 
+            Debug.LogWarning("Placement impossible : Cela bloque le chemin des ennemis !");
             return false;  
         }
 
-        if (!EnergyManager.Instance.TrySpendEnergy(cost))
-        {
-            clickedNode.isWalkable = true; 
-            return false;
-        }
+        EnergyManager.Instance.TrySpendEnergy(cost);
 
         Vector3 spawnPos = new Vector3(worldPos.x, worldPos.y + hauteurPhysique, worldPos.z);
         GameObject nouvelleTour = Instantiate(chassisPrefab, spawnPos, chassisPrefab.transform.rotation);
         
         context.AddTower(targetCoords, nouvelleTour);
 
-        // On initialise le système d'AutoTiling si c'est une barricade 
         AutoTilingBarricade autoTiling = nouvelleTour.GetComponent<AutoTilingBarricade>();
         if (autoTiling != null)
         {
             autoTiling.Init(targetCoords);
         }
 
-        //On trigger les voisins de la barricade au cas où je dois mettre à jour 
         GameEvents.TriggerObstacleToggled(new Vector3Int(targetCoords.x, targetCoords.y, 0), true);  
         GameEvents.TriggerGridChanged(); 
         

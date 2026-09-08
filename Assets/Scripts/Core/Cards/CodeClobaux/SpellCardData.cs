@@ -1,27 +1,28 @@
 using UnityEngine;
+using System.Threading.Tasks; 
 
 public abstract class SpellCardData : CardData
 {
-    [Header("Données de Sort (Pouvoir)")]
     public bool requiresTargeting;
 
     public abstract ISpellEffect CreateSpellEffect();
 
-    public override bool TryPlayCard(Vector2Int targetCoords, PlacementManager context)
+    // 
+    public override Task<bool> TryPlayCardAsync(Vector2Int targetCoords, PlacementManager context)
     {
         Node clickedNode = context.GridData.Grid[targetCoords.x, targetCoords.y];  
 
         if (requiresTargeting && !clickedNode.isWalkable && !context.TryGetTowerAt(targetCoords, out _)) 
         {
-            // Gestion ciblée à affiner plus tard
+            // (Logique ciblée future)
         }
 
-        if (!EnergyManager.Instance.TrySpendEnergy(cost)) return false;
+        if (!EnergyManager.Instance.TrySpendEnergy(cost)) return Task.FromResult(false);
 
         Vector3 targetPos = context.GetWorldPosition(targetCoords);
         ISpellEffect spellLogic = CreateSpellEffect();
         spellLogic.Execute(targetPos);
 
-        return true;
+        return Task.FromResult(true);
     }
 }

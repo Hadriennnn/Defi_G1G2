@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UnityEngine;
 
 public abstract class CardData : ScriptableObject
@@ -14,5 +15,5 @@ public abstract class CardData : ScriptableObject
     [Tooltip("Nombre d'utilisations avant que la carte ne soit détruite pour le reste de l'Acte.")]
     public int maxCharges = 1;
 
-    public abstract bool TryPlayCard(Vector2Int targetCoords, PlacementManager context);
+    public abstract Task<bool> TryPlayCardAsync(Vector2Int targetCoords, PlacementManager context);
 }

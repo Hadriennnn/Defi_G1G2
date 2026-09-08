@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;  
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class Pathfinding : MonoBehaviour, IPathfinder
@@ -20,6 +22,8 @@ public class Pathfinding : MonoBehaviour, IPathfinder
     private Heap<PathNode> openSet;
     private int currentSearchId = 0;
     private HashSet<PathNode> cachedTargetNodes = new HashSet<PathNode>();
+    
+    private bool isCalculating = false;
 
     public void Init()  
     {  
@@ -29,18 +33,24 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         int maxSize = gridData.largeur * gridData.hauteur;
         openSet = new Heap<PathNode>(maxSize);
         
-        CheckAllPaths(); 
+        // On lance le calcul initial de façon asynchrone
+        _ = CheckAllPathsAsync(); 
     }  
    
     void OnEnable()  
     {  
-        GameEvents.OnGridChanged += () => CheckAllPaths();
+        GameEvents.OnGridChanged += HandleGridChanged;
     }  
 
     void OnDisable()  
     {  
-        GameEvents.OnGridChanged -= () => CheckAllPaths();  
+        GameEvents.OnGridChanged -= HandleGridChanged;  
     }  
+
+    private async void HandleGridChanged()
+    {
+        await CheckAllPathsAsync();
+    }
 
     private void InitializePathGrid()  
     {  
@@ -54,80 +64,126 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         }  
     }  
 
-    public bool CheckAllPaths()
+    public async Task<bool> CheckAllPathsAsync()
     {
+        if (isCalculating) return false; // Bloque les clics intempestifs
+        isCalculating = true;
+
+        List<Vector2Int> spawns = LevelManager.Instance != null ? LevelManager.Instance.spawnPoints.ToList() : new List<Vector2Int>();
+        List<Vector2Int> bases = LevelManager.Instance != null ? LevelManager.Instance.GetBaseCoords() : new List<Vector2Int>();
+        List<GlobalSocket> doors = ChunkManager.Instance != null ? ChunkManager.Instance.allDoors.ToList() : new List<GlobalSocket>();
+
+        Dictionary<Vector2Int, List<Node>> safeAnciensChemins = new Dictionary<Vector2Int, List<Node>>(derniersCheminsValides);
         Dictionary<Vector2Int, List<Node>> temporaryPaths = new Dictionary<Vector2Int, List<Node>>();
-        HashSet<Node> routesExistantes = new HashSet<Node>(); 
+        HashSet<Node> routesExistantes = new HashSet<Node>();
+        
+        bool allValid = true;
+        Exception backgroundException = null;
 
-        // 1. VÉRIFICATION DES PORTAILS (Spawns)
-        foreach (Vector2Int spawnCoord in LevelManager.Instance.spawnPoints)
+        await Task.Run(() =>
         {
-            if (!gridData.Grid[spawnCoord.x, spawnCoord.y].isActive) continue;
-
-            // NOUVEAU : On récupère l'ancien chemin pour donner une "Inertie" à la recherche
-            HashSet<Node> oldPathForThisSpawn = new HashSet<Node>();
-            if (derniersCheminsValides != null && derniersCheminsValides.ContainsKey(spawnCoord))
+            try
             {
-                oldPathForThisSpawn = new HashSet<Node>(derniersCheminsValides[spawnCoord]);
-            }
-
-            // On ajoute le paramètre oldPathForThisSpawn à la fonction
-            List<Node> pathForThisSpawn = FindSinglePath(spawnCoord, LevelManager.Instance.GetBaseCoords(), routesExistantes, oldPathForThisSpawn);
-           
-            if (pathForThisSpawn == null) return false; 
-
-            temporaryPaths[spawnCoord] = pathForThisSpawn;
-           
-            foreach(Node n in pathForThisSpawn) routesExistantes.Add(n);
-        }
-
-        // 2. VÉRIFICATION DE TOUTES LES PORTES 
-        if (ChunkManager.Instance != null)
-        {
-            foreach (GlobalSocket door in ChunkManager.Instance.allDoors)
-            {
-                if (!gridData.Grid[door.position.x, door.position.y].isActive) continue;
-
-                Vector2Int dirVec = ChunkManager.Instance.GetVectorFromDirection(door.direction);
-                Vector2Int facingPos = door.position + dirVec;
-                
-                if (facingPos.x >= 0 && facingPos.x < gridData.largeur && facingPos.y >= 0 && facingPos.y < gridData.hauteur)
+                // VÉRIFICATION DES PORTAILS 
+                foreach (Vector2Int spawnCoord in spawns)
                 {
-                    if (gridData.Grid[facingPos.x, facingPos.y].isActive) continue;
+                    if (!gridData.Grid[spawnCoord.x, spawnCoord.y].isActive) continue;
+
+                    HashSet<Node> oldPathForThisSpawn = new HashSet<Node>();
+                    if (safeAnciensChemins.ContainsKey(spawnCoord))
+                    {
+                        oldPathForThisSpawn = new HashSet<Node>(safeAnciensChemins[spawnCoord]);
+                    }
+
+                    List<Node> pathForThisSpawn = FindSinglePath(spawnCoord, bases, routesExistantes, oldPathForThisSpawn);
+                   
+                    if (pathForThisSpawn == null) 
+                    {
+                        allValid = false;
+                        break; 
+                    }
+
+                    temporaryPaths[spawnCoord] = pathForThisSpawn;
+                    foreach(Node n in pathForThisSpawn) routesExistantes.Add(n);
                 }
 
-                // Pour les portes qui n'ont pas d'ennemis, on passe une mémoire vide
-                HashSet<Node> emptyMemory = new HashSet<Node>();
-                List<Node> pathForDoor = FindSinglePath(door.position, LevelManager.Instance.GetBaseCoords(), routesExistantes, emptyMemory);
-                if (pathForDoor == null) return false; 
-            }
-        }
+                if (!allValid) return; // Si un chemin est bloqué, on arrête 
 
-        // 3. ENREGISTREMENT DES CHEMINS 
-        derniersCheminsValides = temporaryPaths;
-        GameEvents.TriggerPathUpdated(routesExistantes.ToList()); 
-        
-        Vector3 origineGrille = transform.position; 
-        foreach (var kvp in derniersCheminsValides)
+                // VÉRIFICATION DE TOUTES LES PORTES 
+                foreach (GlobalSocket door in doors)
+                {
+                    if (!gridData.Grid[door.position.x, door.position.y].isActive) continue;
+
+                    Vector2Int dirVec = GetDirectionVector(door.direction);
+                    Vector2Int facingPos = door.position + dirVec;
+                    
+                    if (facingPos.x >= 0 && facingPos.x < gridData.largeur && facingPos.y >= 0 && facingPos.y < gridData.hauteur)
+                    {
+                        if (gridData.Grid[facingPos.x, facingPos.y].isActive) continue;
+                    }
+
+                    HashSet<Node> emptyMemory = new HashSet<Node>();
+                    List<Node> pathForDoor = FindSinglePath(door.position, bases, routesExistantes, emptyMemory);
+                    if (pathForDoor == null) 
+                    {
+                        allValid = false;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                backgroundException = ex;
+                allValid = false;
+            }
+        });
+
+        if (backgroundException != null)
         {
-            Vector2Int spawnPoint = kvp.Key;
-            List<Node> nodesDuChemin = kvp.Value;
-            List<Vector3> waypointsFinaux = new List<Vector3>();
+            Debug.LogError($"[Pathfinding] Erreur dans le thread arrière-plan : {backgroundException}");
+        }
 
-            foreach (Node n in nodesDuChemin)
+        if (allValid)
+        {
+            derniersCheminsValides = temporaryPaths;
+            GameEvents.TriggerPathUpdated(routesExistantes.ToList()); 
+            
+            Vector3 origineGrille = transform.position; 
+            foreach (var kvp in derniersCheminsValides)
             {
-                float worldX = origineGrille.x + (n.gridX * gridData.cellSize) + (gridData.cellSize / 2f);
-                float worldZ = origineGrille.z + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
-                waypointsFinaux.Add(new Vector3(worldX, origineGrille.y + 0.5f, worldZ));
-            }
+                Vector2Int spawnPoint = kvp.Key;
+                List<Node> nodesDuChemin = kvp.Value;
+                List<Vector3> waypointsFinaux = new List<Vector3>();
 
-            if (LevelManager.Instance != null)
-            {
-                LevelManager.Instance.EnregistrerWaypoints(spawnPoint, waypointsFinaux);
+                foreach (Node n in nodesDuChemin)
+                {
+                    float worldX = origineGrille.x + (n.gridX * gridData.cellSize) + (gridData.cellSize / 2f);
+                    float worldZ = origineGrille.z + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
+                    waypointsFinaux.Add(new Vector3(worldX, origineGrille.y + 0.5f, worldZ));
+                }
+
+                if (LevelManager.Instance != null)
+                {
+                    LevelManager.Instance.EnregistrerWaypoints(spawnPoint, waypointsFinaux);
+                }
             }
         }
 
-        return true;
+        isCalculating = false;
+        return allValid;
+    }
+
+    // Helper sécurisé pour le Background Thread
+    private Vector2Int GetDirectionVector(SocketDirection dir)
+    {
+        switch (dir)
+        {
+            case SocketDirection.Nord: return new Vector2Int(0, 1);
+            case SocketDirection.Sud: return new Vector2Int(0, -1);
+            case SocketDirection.Est: return new Vector2Int(1, 0);
+            case SocketDirection.Ouest: return new Vector2Int(-1, 0);
+            default: return Vector2Int.zero;
+        }
     }
 
     private void PrepareNode(PathNode node)
@@ -142,7 +198,6 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         }
     }
 
-    // NOUVEAU SIGNATURE : Ajout de "oldPathNodes"
     private List<Node> FindSinglePath(Vector2Int startPos, List<Vector2Int> targetPositions, HashSet<Node> preferredNodes, HashSet<Node> oldPathNodes)  
     {  
         if (!pathGrid[startPos.x, startPos.y].GridNode.isWalkable) return null;
@@ -187,17 +242,10 @@ public class Pathfinding : MonoBehaviour, IPathfinder
                     continue;  
                 }  
 
-                // CORRECTION MATHÉMATIQUE (x100 pour plus de précision)
                 int coutDeBase = 1000; 
                 
-                if (preferredNodes.Contains(neighbor.GridNode)) 
-                {
-                    coutDeBase = 500; // Aimant pour fusionner les chemins
-                }
-                else if (oldPathNodes.Contains(neighbor.GridNode))
-                {
-                    coutDeBase = 999; // INERTIE : On donne 1 point de "réduction" si la case faisait partie de l'ancien chemin !
-                }
+                if (preferredNodes.Contains(neighbor.GridNode)) coutDeBase = 500;
+                else if (oldPathNodes.Contains(neighbor.GridNode)) coutDeBase = 999; 
 
                 int newMovementCostToNeighbor = currentNode.gCost + coutDeBase;  
 
@@ -205,7 +253,6 @@ public class Pathfinding : MonoBehaviour, IPathfinder
                 {  
                     neighbor.gCost = newMovementCostToNeighbor;  
                     
-                    // L'heuristique (hCost) s'adapte au coût minimum absolu possible (500) pour rester juste
                     PathNode referenceTarget = pathGrid[targetPositions[0].x, targetPositions[0].y];
                     neighbor.hCost = GetRawDistance(neighbor, referenceTarget) * 500; 
                     
@@ -267,7 +314,6 @@ public class PathNode : IHeapItem<PathNode>
 
     public PathNode parent;  
     private int heapIndex;  
-
     public int searchId;
 
     public int HeapIndex  
@@ -285,10 +331,7 @@ public class PathNode : IHeapItem<PathNode>
     public int CompareTo(PathNode nodeToCompare)  
     {  
         int compare = fCost.CompareTo(nodeToCompare.fCost);  
-        if (compare == 0)  
-        {  
-            compare = hCost.CompareTo(nodeToCompare.hCost);  
-        }  
+        if (compare == 0) compare = hCost.CompareTo(nodeToCompare.hCost);  
         return -compare;  
     }
 }

@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public interface IPathfinder
 {
-    bool CheckAllPaths();
+    Task<bool> CheckAllPathsAsync();
 }

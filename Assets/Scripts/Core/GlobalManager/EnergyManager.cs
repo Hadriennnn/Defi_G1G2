@@ -13,7 +13,6 @@ public class EnergyManager : MonoBehaviour
     
     private int currentEnergy;
 
-
     public event Action<int, int> OnEnergyChanged; 
 
     void Awake()
@@ -24,7 +23,6 @@ public class EnergyManager : MonoBehaviour
 
     void OnEnable()
     {
-        // On écoute le GameManager : dès qu'on passe en Préparation on recharge
         GameEvents.OnGameStateChanged += HandleGameStateChanged;
     }
 
@@ -35,7 +33,6 @@ public class EnergyManager : MonoBehaviour
 
     private void HandleGameStateChanged(GameState state)
     {
-        // On restaure l'énergie uniquement quand on revient en phase de préparation
         if (state == GameState.PreparationPhase)
         {
             RefillEnergy();
@@ -44,13 +41,16 @@ public class EnergyManager : MonoBehaviour
 
     private void RefillEnergy()
     {
-        // L'énergie totale de ce tour est la base + le bonus des Puits de Réserve
         currentEnergy = baseEnergyPerWave + bonusEnergyPerWave;
         NotifyUI();
         Debug.Log($"[EnergyManager] Nouvelle vague : Énergie restaurée à {currentEnergy}");
     }
 
-    // Fonction appelée par le PlacementManager quand le joueur lâche une carte sur le terrain
+    public bool HasEnoughEnergy(int amount)
+    {
+        return currentEnergy >= amount;
+    }
+
     public bool TrySpendEnergy(int amount)
     {
         if (currentEnergy >= amount)
@@ -64,14 +64,12 @@ public class EnergyManager : MonoBehaviour
         return false;
     }
 
-    // Fonction pour gagner direct de l'énergie pendant le tour d'action
     public void GainInstantEnergy(int amount)
     {
         currentEnergy += amount;
         NotifyUI();
     }
 
-    // Fonction énergie passive par tour
     public void AddPermanentBonusEnergy(int amount)
     {
         bonusEnergyPerWave += amount;
@@ -86,6 +84,5 @@ public class EnergyManager : MonoBehaviour
     {
         int maxEnergy = baseEnergyPerWave + bonusEnergyPerWave;
         OnEnergyChanged?.Invoke(currentEnergy, maxEnergy);
-        Debug.Log("[EnergyManager] Energie actuele : " + currentEnergy);
     }
 }
