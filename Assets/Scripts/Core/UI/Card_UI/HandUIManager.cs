@@ -9,13 +9,11 @@ public class HandUIManager : MonoBehaviour
     public GameObject cardUIPrefab; 
     public Transform handContainer; 
     
-    [Tooltip("Le texte enfant du bouton Mulligan")]
     public TextMeshProUGUI mulliganButtonText; 
 
-    //Logique de Mulligan
     private bool isMulliganMode = false;
-    private List<CardData> cardsSelectedForMulligan = new List<CardData>();
-    private Dictionary<CardData, GameObject> visualCards = new Dictionary<CardData, GameObject>();
+    private List<CardInstance> cardsSelectedForMulligan = new List<CardInstance>();
+    private Dictionary<CardInstance, GameObject> visualCards = new Dictionary<CardInstance, GameObject>();
 
     void Start()
     {
@@ -23,7 +21,7 @@ public class HandUIManager : MonoBehaviour
         DeckManager.Instance.OnCardDiscarded += RemoveCardVisual;
         GameEvents.OnMulliganModeToggled += ToggleMulliganMode;
 
-        foreach (CardData card in DeckManager.Instance.GetHand())
+        foreach (CardInstance card in DeckManager.Instance.GetHand())
         {
             AddCardVisual(card);
         }
@@ -44,7 +42,6 @@ public class HandUIManager : MonoBehaviour
         isMulliganMode = enabled;
         cardsSelectedForMulligan.Clear();
         
-        // Reset l'aspect visuel de toutes les cartes
         foreach (var kvp in visualCards)
         {
             kvp.Value.GetComponent<Image>().color = Color.white;
@@ -56,7 +53,7 @@ public class HandUIManager : MonoBehaviour
         }
     }
 
-    public void OnCardClicked(CardData cardClicked)
+    public void OnCardClicked(CardInstance cardClicked)
     {
         if (isMulliganMode)
         {
@@ -92,19 +89,17 @@ public class HandUIManager : MonoBehaviour
     {
         if (!isMulliganMode)
         {
-            // On ACTIVE le mode Mulligan
             GameEvents.TriggerMulliganModeToggled(true);
             if (mulliganButtonText != null) mulliganButtonText.text = "Annuler";
         }
         else
         {
-            // On ANNULE le mode Mulligan
             GameEvents.TriggerMulliganModeToggled(false);
         }
     }
 
 
-    private void AddCardVisual(CardData data)
+    private void AddCardVisual(CardInstance data)
     {
         GameObject newCard = Instantiate(cardUIPrefab, handContainer);
         CardUI cardScript = newCard.GetComponent<CardUI>();
@@ -117,7 +112,7 @@ public class HandUIManager : MonoBehaviour
         visualCards.Add(data, newCard);
     }
 
-    private void RemoveCardVisual(CardData data)
+    private void RemoveCardVisual(CardInstance data)
     {
         if (visualCards.TryGetValue(data, out GameObject cardObj))
         {

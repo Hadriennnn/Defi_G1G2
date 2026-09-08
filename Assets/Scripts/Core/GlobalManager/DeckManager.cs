@@ -11,18 +11,17 @@ public class DeckManager : MonoBehaviour
     public int maxHandSize = 6; 
     
     [Header("Coûts (Balatro)")]
-    public int mulliganEnergyCost = 1; // Coût de base pour défausser/repiocher
+    public int mulliganEnergyCost = 1;
 
-    // Les Piles de Cartes
-    private List<CardData> drawPile = new List<CardData>();
-    private List<CardData> hand = new List<CardData>();
-    private List<CardData> discardPile = new List<CardData>();
-    private List<CardData> exhaustedPile = new List<CardData>(); // Cartes détruites pour l'Acte
-    private List<CardData> armedSpells = new List<CardData>();   // Sorts en attente
+    private List<CardInstance> drawPile = new List<CardInstance>();
+    private List<CardInstance> hand = new List<CardInstance>();
+    private List<CardInstance> discardPile = new List<CardInstance>();
+    private List<CardInstance> exhaustedPile = new List<CardInstance>(); 
+    private List<CardInstance> armedSpells = new List<CardInstance>();   
 
     // UI
-    public event Action<CardData> OnCardDrawn;
-    public event Action<CardData> OnCardDiscarded;
+    public event Action<CardInstance> OnCardDrawn;
+    public event Action<CardInstance> OnCardDiscarded;
     public event Action OnDeckReshuffled;
 
     void Awake()
@@ -42,17 +41,10 @@ public class DeckManager : MonoBehaviour
 
     private void HandleGameStateChanged(GameState state)
     {
-        if (state == GameState.PreparationPhase)
-        {
-            DrawHand();
-        }
-        else if (state == GameState.ActionPhase)
-        {
-            DiscardEntireHand();
-        }
+        if (state == GameState.PreparationPhase) DrawHand();
+        else if (state == GameState.ActionPhase) DiscardEntireHand();
     }
 
-    // On clone les cartes pour ne pas détruire les assets de bases que j'ai fait 
     public void InitializeDeckForNewAct()
     {
         drawPile.Clear();
@@ -63,9 +55,7 @@ public class DeckManager : MonoBehaviour
 
         foreach (CardData baseCard in startingDeck)
         {
-            CardData clonedCard = Instantiate(baseCard); 
-            clonedCard.ResetCard(); // Met currentCharges = maxCharges
-            drawPile.Add(clonedCard);
+            drawPile.Add(new CardInstance(baseCard));
         }
         
         Shuffle(drawPile);
@@ -91,30 +81,26 @@ public class DeckManager : MonoBehaviour
             ReshuffleDiscardIntoDraw();
         }
 
-        CardData drawnCard = drawPile[0];
+        CardInstance drawnCard = drawPile[0];
         drawPile.RemoveAt(0);
         hand.Add(drawnCard);
 
         OnCardDrawn?.Invoke(drawnCard);
     }
-
-    // CHARGES ICI 
     
-    // Appelée par le PlacementManager quand une carte est jouée sur le plateau
-    public void UseCardAndDiscard(CardData card)
+    public void UseCardAndDiscard(CardInstance card)
     {
         if (!hand.Contains(card)) return;
 
-        card.currentCharges--;
-        Debug.Log($"[DeckManager] Carte jouée : {card.nomCarte}. Charges restantes : {card.currentCharges}");
+        card.CurrentCharges--;
+        Debug.Log($"[DeckManager] Carte jouée : {card.Data.nomCarte}. Charges restantes : {card.CurrentCharges}");
 
         hand.Remove(card);
-        OnCardDiscarded?.Invoke(card); // UI
+        OnCardDiscarded?.Invoke(card); 
 
-        // exhaust ici 
-        if (card.currentCharges <= 0)
+        if (card.CurrentCharges <= 0)
         {
-            Debug.Log($"[DeckManager] {card.nomCarte} ÉPUISÉE (Détruite pour l'Acte) !");
+            Debug.Log($"[DeckManager] {card.Data.nomCarte} ÉPUISÉE (Détruite pour l'Acte) !");
             exhaustedPile.Add(card);
         }
         else
@@ -123,26 +109,22 @@ public class DeckManager : MonoBehaviour
         }
     }
 
-    // Appelée à la fin de la phase de prépa
     public void DiscardEntireHand()
     {
-        List<CardData> tempHand = new List<CardData>(hand);
-        foreach (CardData card in tempHand)
+        List<CardInstance> tempHand = new List<CardInstance>(hand);
+        foreach (CardInstance card in tempHand)
         {
             hand.Remove(card);
-            discardPile.Add(card); // On défausse sans retirer de charge
+            discardPile.Add(card); 
             OnCardDiscarded?.Invoke(card);
         }
         Debug.Log($"[DeckManager] Main défaussée. Défausse : {discardPile.Count}");
     }
 
-    // MULLIGAN
-    
-    public bool TryMulligan(List<CardData> selectedCards)
+    public bool TryMulligan(List<CardInstance> selectedCards)
     {
         if (selectedCards.Count == 0) return false;
 
-        // On vérifie si on a l'énergie
         if (!EnergyManager.Instance.TrySpendEnergy(mulliganEnergyCost))
         {
             return false;
@@ -150,8 +132,7 @@ public class DeckManager : MonoBehaviour
 
         Debug.Log($"[DeckManager] Mulligan effectué pour {mulliganEnergyCost} énergie. {selectedCards.Count} cartes changées.");
 
-        // On défausse les cartes sélectionnées
-        foreach (CardData card in selectedCards)
+        foreach (CardInstance card in selectedCards)
         {
             if (hand.Contains(card))
             {
@@ -161,15 +142,10 @@ public class DeckManager : MonoBehaviour
             }
         }
 
-        // On repioche le même nombre
         for (int i = 0; i < selectedCards.Count; i++)
         {
             DrawSingleCard();
         }
-
-        // Si je voudrais augmenté le coup à chaque fois 
-        // mulliganEnergyCost++; 
-
         return true;
     }
 
@@ -181,16 +157,16 @@ public class DeckManager : MonoBehaviour
         OnDeckReshuffled?.Invoke();
     }
 
-    private void Shuffle(List<CardData> list)
+    private void Shuffle(List<CardInstance> list)
     {
         for (int i = 0; i < list.Count; i++)
         {
-            CardData temp = list[i];
+            CardInstance temp = list[i];
             int randomIndex = UnityEngine.Random.Range(i, list.Count);
             list[i] = list[randomIndex];
             list[randomIndex] = temp;
         }
     }
     
-    public List<CardData> GetHand() => hand;
+    public List<CardInstance> GetHand() => hand;
 }

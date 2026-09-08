@@ -10,19 +10,9 @@ public abstract class CardData : ScriptableObject
     public int cost; 
     public Sprite icon; 
 
-    [Header("Système de Charges)")]
+    [Header("Système de Charges")]
     [Tooltip("Nombre d'utilisations avant que la carte ne soit détruite pour le reste de l'Acte.")]
     public int maxCharges = 1;
-    
-    // Cette variable sera modifiée en jeu. Elle n'est pas sauvegardée de base dans le ScriptableObject.
-    [HideInInspector] 
-    public int currentCharges;
-
-    // Méthode pour réinitialiser la carte au début d'un Acte
-    public virtual void ResetCard()
-    {
-        currentCharges = maxCharges;
-    }
 
     public abstract bool TryPlayCard(Vector2Int targetCoords, PlacementManager context);
 }

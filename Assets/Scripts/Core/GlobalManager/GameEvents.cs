@@ -16,8 +16,8 @@ public static class GameEvents
     public static void TriggerMapExpanded() => OnMapExpanded?.Invoke();
 
     public static void TriggerGameStateChanged(GameState newState) => OnGameStateChanged?.Invoke(newState);
-    public static event Action<CardData> OnCardSelected;
-    public static void TriggerCardSelected(CardData card) => OnCardSelected?.Invoke(card);
+    
+    
     public static event Action OnCardDeselected;
     public static void TriggerCardDeselected() => OnCardDeselected?.Invoke();
     public static void TriggerGridChanged() => OnGridChanged?.Invoke();  
@@ -59,9 +59,11 @@ public static class GameEvents
     public static event Action<bool> OnMulliganModeToggled;
     public static void TriggerMulliganModeToggled(bool isEnabled) => OnMulliganModeToggled?.Invoke(isEnabled);
     
-    // CHARGES DES CARTES 
-    public static event Action<CardData> OnCardChargesUpdated;
-    public static void TriggerCardChargesUpdated(CardData card) => OnCardChargesUpdated?.Invoke(card);
+    public static event Action<CardInstance> OnCardSelected;
+    public static void TriggerCardSelected(CardInstance card) => OnCardSelected?.Invoke(card);
+
+    public static event Action<CardInstance> OnCardChargesUpdated;
+    public static void TriggerCardChargesUpdated(CardInstance card) => OnCardChargesUpdated?.Invoke(card);
 }
 
 public enum GameState

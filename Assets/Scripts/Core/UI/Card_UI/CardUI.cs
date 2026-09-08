@@ -12,16 +12,14 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     public Image cardIcon; 
     
     [Header("Nouvelle UI")]
-    public TextMeshProUGUI chargesText; // Le texte des charges
+    public TextMeshProUGUI chargesText;
     
-    public CardData CardDataAsset { get; private set; }
+    public CardInstance CardInstanceData { get; private set; }
    
-    private CardData myData;
     private HandUIManager myManager;
 
     void OnEnable()
     {
-        // On écoute le changement de charges
         GameEvents.OnCardChargesUpdated += HandleChargesUpdate;
     }
 
@@ -30,28 +28,26 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
         GameEvents.OnCardChargesUpdated -= HandleChargesUpdate;
     }
 
-    public void Setup(CardData data, HandUIManager manager)
+    public void Setup(CardInstance instance, HandUIManager manager)
     {
-        myData = data;
-        CardDataAsset = data;
+        CardInstanceData = instance;
         myManager = manager;
         
-        if (nameText != null) nameText.text = data.nomCarte;
-        if (costText != null) costText.text = data.cost.ToString();
-        if (descriptionText != null) descriptionText.text = data.description;
+        if (nameText != null) nameText.text = instance.Data.nomCarte;
+        if (costText != null) costText.text = instance.Data.cost.ToString();
+        if (descriptionText != null) descriptionText.text = instance.Data.description;
         
-        if (cardIcon != null && data.icon != null) 
+        if (cardIcon != null && instance.Data.icon != null) 
         {
-            cardIcon.sprite = data.icon;
+            cardIcon.sprite = instance.Data.icon;
         }
 
         RefreshChargeText();
     }
 
-    // Fonction appelée par l'événement global
-    private void HandleChargesUpdate(CardData updatedCard)
+    private void HandleChargesUpdate(CardInstance updatedCard)
     {
-        if (updatedCard == myData)
+        if (updatedCard == CardInstanceData)
         {
             RefreshChargeText();
         }
@@ -59,16 +55,15 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
 
     private void RefreshChargeText()
     {
-        if (chargesText != null && myData != null)
+        if (chargesText != null && CardInstanceData != null)
         {
-            // Affiche "1", ou "Charges: 1" selon tes préférences
-            chargesText.text = myData.currentCharges.ToString();
+            chargesText.text = CardInstanceData.CurrentCharges.ToString();
         }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (myData == null) return;
-        myManager.OnCardClicked(myData);
+        if (CardInstanceData == null) return;
+        myManager.OnCardClicked(CardInstanceData);
     }
 }

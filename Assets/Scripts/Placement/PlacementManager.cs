@@ -7,7 +7,6 @@ public class PlacementManager : MonoBehaviour
 {  
     public static PlacementManager Instance { get; private set; } 
     
-    // --- OUTILS PUBLICS POUR LES CARTES ---
     public GridData GridData { get; private set; }
     public IPathfinder Pathfinder { get; private set; }
     public GridVisualizer GridVisualizer { get; private set; }
@@ -22,7 +21,7 @@ public class PlacementManager : MonoBehaviour
     private Vector2Int derniereCaseSurvolee = new Vector2Int(-1, -1);
     private bool peutPlacer = true;
 
-    private CardData activeCard = null;
+    private CardInstance activeCard = null;
     public CardData debugCardToTest; 
 
     void Awake()  
@@ -60,10 +59,10 @@ public class PlacementManager : MonoBehaviour
         }
     }
 
-    private void SelectCard(CardData card)
+    private void SelectCard(CardInstance card)
     {
         activeCard = card;
-        Debug.Log($"[PlacementManager] Carte sélectionnée : {card.nomCarte} (Coût: {card.cost})");
+        Debug.Log($"[PlacementManager] Carte sélectionnée : {card.Data.nomCarte} (Coût: {card.Data.cost})");
     }
 
     private void DeselectCard()
@@ -74,9 +73,10 @@ public class PlacementManager : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) 
+        // En mode debug, on simule la création d'une instance à la volée
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && debugCardToTest != null) 
         {
-            SelectCard(debugCardToTest);
+            SelectCard(new CardInstance(debugCardToTest));
         }
 
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
@@ -155,18 +155,19 @@ public class PlacementManager : MonoBehaviour
 
         if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(inputCoords)) return; 
 
-        if (activeCard.TryPlayCard(inputCoords, this))
+        // ON APPELLE TRYPLAYCARD SUR LA DATA
+        if (activeCard.Data.TryPlayCard(inputCoords, this))
         {
             bool keepInHand = false;
 
-            if (activeCard is StructureCardData structureCard)
+            if (activeCard.Data is StructureCardData structureCard)
             {
-                if (structureCard.isMultiCast && activeCard.currentCharges > 1)
+                // ON LIT LES DONNÉES SUR L'INSTANCE
+                if (structureCard.isMultiCast && activeCard.CurrentCharges > 1)
                 {
                     keepInHand = true;
-                    activeCard.currentCharges--; 
+                    activeCard.CurrentCharges--; 
                     
-                    // NOUVEAU : On prévient l'UI que la charge de cette carte a changé !
                     GameEvents.TriggerCardChargesUpdated(activeCard);
                 }
             }
@@ -178,8 +179,6 @@ public class PlacementManager : MonoBehaviour
             }
         }
     }
-
-    //METHODES UTILITAIRES POUR LES CARTES
 
     public Vector3 GetWorldPosition(Vector2Int coords)
     {
