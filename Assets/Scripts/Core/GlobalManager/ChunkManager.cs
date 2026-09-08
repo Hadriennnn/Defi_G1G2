@@ -30,7 +30,7 @@ public class ChunkManager : MonoBehaviour
     public Vector2Int baseNoyauCoords;
     public List<GlobalSocket> openDoors = new List<GlobalSocket>();
     
-    public List<Vector2Int> allDoorsPositions = new List<Vector2Int>();
+    public List<GlobalSocket> allDoors = new List<GlobalSocket>();
 
     private int currentChunkIdCounter = 1;
 
@@ -45,7 +45,7 @@ public class ChunkManager : MonoBehaviour
         // Sécurité : on nettoie les listes au cas où on relance une partie
         activeSpawns.Clear();
         openDoors.Clear();
-        allDoorsPositions.Clear();
+        allDoors.Clear();
         currentChunkIdCounter = 1;
 
         bakedElevation = new int[globalGridSize, globalGridSize];
@@ -166,7 +166,7 @@ public class ChunkManager : MonoBehaviour
 
             if (socket.type == SocketType.Porte_Entree || socket.type == SocketType.Porte_Sortie)
             {
-                allDoorsPositions.Add(globalPos);
+                allDoors.Add(new GlobalSocket { position = globalPos, direction = socket.direction, type = socket.type, chunkId = chunkIdAssigne });
             }
 
             if (socket.type == SocketType.Porte_Entree)
@@ -206,7 +206,7 @@ public class ChunkManager : MonoBehaviour
         }
     }
 
-    private Vector2Int GetVectorFromDirection(SocketDirection dir)
+    public Vector2Int GetVectorFromDirection(SocketDirection dir)
     {
         switch (dir)
         {

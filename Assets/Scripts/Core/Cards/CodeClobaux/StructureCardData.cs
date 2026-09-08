@@ -48,6 +48,14 @@ public class StructureCardData : CardData
         
         context.AddTower(targetCoords, nouvelleTour);
 
+        // On initialise le système d'AutoTiling si c'est une barricade 
+        AutoTilingBarricade autoTiling = nouvelleTour.GetComponent<AutoTilingBarricade>();
+        if (autoTiling != null)
+        {
+            autoTiling.Init(targetCoords);
+        }
+
+        //On trigger les voisins de la barricade au cas où je dois mettre à jour 
         GameEvents.TriggerObstacleToggled(new Vector3Int(targetCoords.x, targetCoords.y, 0), true);  
         GameEvents.TriggerGridChanged(); 
         

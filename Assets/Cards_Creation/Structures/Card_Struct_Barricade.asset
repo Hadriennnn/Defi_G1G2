@@ -19,5 +19,5 @@ MonoBehaviour:
   icon: {fileID: 0}
   maxCharges: 10
   currentCharges: 0
-  chassisPrefab: {fileID: 1996272947337713647, guid: 5763922056b25fd4cb73fd60007ed5b4, type: 3}
+  chassisPrefab: {fileID: 5696111426729847908, guid: e3bf374ce300c8445b1b64e179a45b3e, type: 3}
   isMultiCast: 1

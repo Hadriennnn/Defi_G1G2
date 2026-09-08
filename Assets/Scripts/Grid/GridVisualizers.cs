@@ -21,6 +21,12 @@ public class GridVisualizer : MonoBehaviour
     public GameObject tuileSortiePrefab;  
     public float offsetRotationSortie = 0f; 
     
+    [Header("Configuration des Portes (Hologramme/Indicateur)")]
+    [Tooltip("Objet posé PAR-DESSUS la tuile pour indiquer une porte vers le vide")]
+    public GameObject indicateurPortePrefab; 
+    public float offsetRotationPorte = 0f;
+    public float hauteurIndicateur = 0.05f; // Légèrement au-dessus du sol
+    
     [Header("Kit de Tuiles Modulaires (Chemin)")]  
     public GameObject tilePathStraight;
     public float offsetStraight = 0f;
@@ -34,6 +40,9 @@ public class GridVisualizer : MonoBehaviour
     private List<GameObject> objetsChemin = new List<GameObject>();
     private GameObject[,] tuilesSolMemoire;
     private List<GameObject> objetsFalaises = new List<GameObject>(); 
+    
+    // NOUVEAU : On garde en mémoire les indicateurs de porte pour les nettoyer
+    private List<GameObject> indicateursActifs = new List<GameObject>();
 
     public void Init()  
     {  
@@ -57,6 +66,14 @@ public class GridVisualizer : MonoBehaviour
     {  
         foreach (GameObject falaise in objetsFalaises) { if (falaise != null) Destroy(falaise); }
         objetsFalaises.Clear();
+
+        // Nettoyage des anciens indicateurs de porte via le PoolManager
+        foreach (GameObject ind in indicateursActifs) 
+        { 
+            if (ind.TryGetComponent<PooledItem>(out PooledItem poolItem)) poolItem.ReleaseToPool();
+            else Destroy(ind);
+        }
+        indicateursActifs.Clear();
 
         if (tuilesSolMemoire != null)
         {
@@ -87,22 +104,21 @@ public class GridVisualizer : MonoBehaviour
                         GameObject prefabADessiner = tuileSolPrefab;
                         float yRotationOffset = 0f; 
 
-                        // GESTION DE L'ENTRÉE
+                        // 1. GESTION DE L'ENTRÉE
                         if (LevelManager.Instance.spawnPoints.Contains(new Vector2Int(x, y)) && tuileEntreePrefab != null)
                         {
                             prefabADessiner = tuileEntreePrefab;
-                            yRotationOffset = offsetRotationEntree; // On applique l'offset
+                            yRotationOffset = offsetRotationEntree; 
                         }
                         
-                        // GESTION DE LA BASE 2x2
+                        // 2. GESTION DE LA BASE 2x2
                         bool isBaseRoot = (x == ChunkManager.Instance.baseNoyauCoords.x && y == ChunkManager.Instance.baseNoyauCoords.y);
                         bool isPartOfBase = LevelManager.Instance.GetBaseCoords().Contains(new Vector2Int(x, y));
 
                         if (isBaseRoot && tuileSortiePrefab != null)
                         {
                             prefabADessiner = tuileSortiePrefab;
-                            yRotationOffset = offsetRotationSortie; // On applique l'offset
-                            
+                            yRotationOffset = offsetRotationSortie; 
                             position.x += gridData.cellSize / 2f;
                             position.z += gridData.cellSize / 2f;
                         }
@@ -111,31 +127,67 @@ public class GridVisualizer : MonoBehaviour
                             prefabADessiner = null; 
                         }
 
+                        // 3. CRÉATION DU SOL NORMAL
                         if (prefabADessiner != null)
                         {
-                            // Calcul de la rotation finale
                             Vector3 originalEuler = prefabADessiner.transform.eulerAngles;
                             Quaternion finalRotation = Quaternion.Euler(originalEuler.x, originalEuler.y + yRotationOffset, originalEuler.z);
 
                             GameObject solInstancie = Instantiate(prefabADessiner, position, finalRotation, transform);
                             tuilesSolMemoire[x, y] = solInstancie;
 
-                            // On donne les coordonnées et le Chunk ID au portail
                             if (prefabADessiner == tuileEntreePrefab)
                             {
                                 EnemySpawner spawner = solInstancie.GetComponent<EnemySpawner>();
                                 if (spawner != null) 
                                 {
                                     int idDuChunk = currentNode.chunkId; 
-                                
-                                    // On va chercher le profil dans le dictionnaire du ChunkManager
                                     SpawnerProfile profilDuChunk = null;
                                     if (ChunkManager.Instance.activeSpawns.ContainsKey(new Vector2Int(x, y)))
                                     {
                                         profilDuChunk = ChunkManager.Instance.activeSpawns[new Vector2Int(x, y)];
                                     }
-
                                     spawner.Init(new Vector2Int(x, y), idDuChunk, profilDuChunk);
+                                }
+                            }
+                        }
+
+                        // 4. GESTION DES INDICATEURS DE PORTE (Par-dessus le sol !)
+                        if (indicateurPortePrefab != null && ChunkManager.Instance != null)
+                        {
+                            foreach (GlobalSocket door in ChunkManager.Instance.allDoors)
+                            {
+                                if (door.position.x == x && door.position.y == y)
+                                {
+                                    // On vérifie si la porte donne sur le vide
+                                    Vector2Int dirVec = ChunkManager.Instance.GetVectorFromDirection(door.direction);
+                                    Vector2Int facingPos = door.position + dirVec;
+                                    bool isConnected = false;
+                                    
+                                    if (facingPos.x >= 0 && facingPos.x < gridData.largeur && facingPos.y >= 0 && facingPos.y < gridData.hauteur)
+                                    {
+                                        if (gridData.Grid[facingPos.x, facingPos.y].isActive) isConnected = true;
+                                    }
+
+                                    if (!isConnected)
+                                    {
+                                        float rotY = 0f;
+                                        switch (door.direction)
+                                        {
+                                            case SocketDirection.Nord: rotY = 0f + offsetRotationPorte; break;
+                                            case SocketDirection.Est: rotY = 90f + offsetRotationPorte; break;
+                                            case SocketDirection.Sud: rotY = 180f + offsetRotationPorte; break;
+                                            case SocketDirection.Ouest: rotY = 270f + offsetRotationPorte; break;
+                                        }
+
+                                        Vector3 indPos = new Vector3(position.x, position.y + hauteurIndicateur, position.z);
+                                        Quaternion indRot = Quaternion.Euler(90f, rotY, 0f);
+
+                                        // On utilise le PoolManager pour ne pas saturer la mémoire
+                                        GameObject indicateur = PoolManager.Instance.Spawn(indicateurPortePrefab, indPos, indRot);
+                                        indicateursActifs.Add(indicateur);
+                                    }
+                                    break;
                                 }
                             }
                         }
@@ -155,7 +207,6 @@ public class GridVisualizer : MonoBehaviour
 
     public void DrawPath(List<Node> path)  
     {  
-        // On passe par le poolManager car j'ai eu bcpppp de lag lors de la prévisualtion 
         foreach (GameObject objet in objetsChemin) 
         { 
             if (objet.TryGetComponent<PooledItem>(out PooledItem poolItem))
@@ -164,11 +215,10 @@ public class GridVisualizer : MonoBehaviour
             }
             else
             {
-                Destroy(objet); // Sécurité au cas où l'objet n'a pas le composant
+                Destroy(objet); 
             }
         }
         objetsChemin.Clear();
-        // ...
 
         if (tuilesSolMemoire != null)
         {
@@ -226,7 +276,6 @@ public class GridVisualizer : MonoBehaviour
                 float rotationFinaleY = rotationY + rotationDOrigine.y + currentOffset;
                 Quaternion rotation = Quaternion.Euler(rotationDOrigine.x, rotationFinaleY, rotationDOrigine.z);
                 
-                // On instantie depuis le poolManager du coup
                 GameObject cheminObj = PoolManager.Instance.Spawn(prefabToInstantiate, position, rotation);
                 cheminObj.transform.SetParent(transform); 
                 

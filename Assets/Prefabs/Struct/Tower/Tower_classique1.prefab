@@ -271,12 +271,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22f7b45d8dc58c448a17b3e18661a9ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerVisuals
-  gemRenderer: {fileID: 5440818006410050208}
-  gemMaterialIndex: 1
+  partsToColor:
+  - renderer: {fileID: 5440818006410050208}
+    materialIndex: 1
+  - renderer: {fileID: 5853706397678709852}
+    materialIndex: 0
   colorOff: {r: 1, g: 1, b: 1, a: 1}
   activeIndicator: {fileID: 5349280768390434185}
-  indicatorRenderer: {fileID: 5853706397678709852}
-  indicatorMaterialIndex: 0
 --- !u!4 &6614248513838596559 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 1dc86dee4cb9eea49af1ee0c55b06bd7, type: 3}

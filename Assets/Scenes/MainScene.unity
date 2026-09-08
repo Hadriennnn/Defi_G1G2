@@ -413,19 +413,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeckManager
   startingDeck:
+  - {fileID: 11400000, guid: 9061e580980383d4fa941d92030fe274, type: 2}
+  - {fileID: 11400000, guid: 9061e580980383d4fa941d92030fe274, type: 2}
+  - {fileID: 11400000, guid: 9061e580980383d4fa941d92030fe274, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
+  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
+  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
   - {fileID: 11400000, guid: 5a4da7d71a05e7b4aa83a88ab70ac9f9, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: c09360a50640d8f4f9c98827a86450ef, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
-  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
   - {fileID: 11400000, guid: 5a4da7d71a05e7b4aa83a88ab70ac9f9, type: 2}
-  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
-  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
-  - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
   maxHandSize: 4
   mulliganEnergyCost: 1
 --- !u!114 &216323883
@@ -773,7 +773,6 @@ MonoBehaviour:
   globalGridSize: 100
   nombreDeChunksAGenerer: 10
   baseNoyauCoords: {x: 0, y: 0}
-  allDoorsPositions: []
 --- !u!1 &378692237
 GameObject:
   m_ObjectHideFlags: 0
@@ -2819,6 +2818,9 @@ MonoBehaviour:
   offsetRotationEntree: 180
   tuileSortiePrefab: {fileID: 1509828006109104495, guid: af9186a9e03d59b42a9da9d20a6cef13, type: 3}
   offsetRotationSortie: 180
+  indicateurPortePrefab: {fileID: 6523289931044209921, guid: 3be332644f1b96a478f30f3e7ec53dc6, type: 3}
+  offsetRotationPorte: 0
+  hauteurIndicateur: 0.05
   tilePathStraight: {fileID: 7099072340445139510, guid: 6827b6f4eb3cfe6489228d83e089fd4c, type: 3}
   offsetStraight: 90
   tilePathCorner: {fileID: 874038867247407904, guid: b0b0e7d78455393478bc7310bc389ef0, type: 3}
