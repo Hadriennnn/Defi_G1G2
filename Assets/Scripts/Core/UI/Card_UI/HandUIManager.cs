@@ -14,12 +14,19 @@ public class HandUIManager : MonoBehaviour
     private bool isMulliganMode = false;
     private List<CardInstance> cardsSelectedForMulligan = new List<CardInstance>();
     private Dictionary<CardInstance, GameObject> visualCards = new Dictionary<CardInstance, GameObject>();
+    
+    private Dictionary<CardInstance, Color> originalColors = new Dictionary<CardInstance, Color>();
 
-    void Start()
+    private CardInstance currentlySelectedCard = null;
+
+    public void Init()
     {
         DeckManager.Instance.OnCardDrawn += AddCardVisual;
         DeckManager.Instance.OnCardDiscarded += RemoveCardVisual;
+        
         GameEvents.OnMulliganModeToggled += ToggleMulliganMode;
+        GameEvents.OnCardSelected += HandleCardSelected;
+        GameEvents.OnCardDeselected += HandleCardDeselected;
 
         foreach (CardInstance card in DeckManager.Instance.GetHand())
         {
@@ -35,6 +42,8 @@ public class HandUIManager : MonoBehaviour
             DeckManager.Instance.OnCardDiscarded -= RemoveCardVisual;
         }
         GameEvents.OnMulliganModeToggled -= ToggleMulliganMode;
+        GameEvents.OnCardSelected -= HandleCardSelected;
+        GameEvents.OnCardDeselected -= HandleCardDeselected;
     }
 
     private void ToggleMulliganMode(bool enabled)
@@ -42,14 +51,49 @@ public class HandUIManager : MonoBehaviour
         isMulliganMode = enabled;
         cardsSelectedForMulligan.Clear();
         
+        if (enabled && currentlySelectedCard != null)
+        {
+            PlacementManager.Instance.DeselectCard();
+        }
+        
+        ResetAllCardColors();
+
+        if (mulliganButtonText != null)
+        {
+            mulliganButtonText.text = enabled ? "Annuler" : "Mulligan";
+        }
+    }
+
+    private void HandleCardSelected(CardInstance card)
+    {
+        ResetAllCardColors(); 
+        currentlySelectedCard = card;
+
+        if (visualCards.TryGetValue(card, out GameObject cardObj))
+        {
+            // On teinte la carte en vert clair pour montrer qu'elle est sélectionnée
+            cardObj.GetComponent<Image>().color = new Color(0.7f, 1f, 0.7f); 
+        }
+    }
+
+    private void HandleCardDeselected()
+    {
+        currentlySelectedCard = null;
+        if (!isMulliganMode) ResetAllCardColors();
+    }
+
+    private void ResetAllCardColors()
+    {
         foreach (var kvp in visualCards)
         {
-            kvp.Value.GetComponent<Image>().color = Color.white;
-        }
+            CardInstance card = kvp.Key;
+            GameObject cardObj = kvp.Value;
 
-        if (!enabled && mulliganButtonText != null)
-        {
-            mulliganButtonText.text = "Mulligan";
+            // On restaure TA couleur d'origine
+            if (originalColors.TryGetValue(card, out Color baseColor))
+            {
+                cardObj.GetComponent<Image>().color = baseColor;
+            }
         }
     }
 
@@ -60,12 +104,12 @@ public class HandUIManager : MonoBehaviour
             if (cardsSelectedForMulligan.Contains(cardClicked))
             {
                 cardsSelectedForMulligan.Remove(cardClicked);
-                visualCards[cardClicked].GetComponent<Image>().color = Color.white; 
+                visualCards[cardClicked].GetComponent<Image>().color = originalColors[cardClicked]; 
             }
             else
             {
                 cardsSelectedForMulligan.Add(cardClicked);
-                visualCards[cardClicked].GetComponent<Image>().color = Color.gray; 
+                visualCards[cardClicked].GetComponent<Image>().color = Color.gray; // Gris pour marquer le Mulligan
             }
         }
         else
@@ -87,17 +131,8 @@ public class HandUIManager : MonoBehaviour
 
     public void OnMulliganButtonClicked()
     {
-        if (!isMulliganMode)
-        {
-            GameEvents.TriggerMulliganModeToggled(true);
-            if (mulliganButtonText != null) mulliganButtonText.text = "Annuler";
-        }
-        else
-        {
-            GameEvents.TriggerMulliganModeToggled(false);
-        }
+        GameEvents.TriggerMulliganModeToggled(!isMulliganMode);
     }
-
 
     private void AddCardVisual(CardInstance data)
     {
@@ -107,6 +142,16 @@ public class HandUIManager : MonoBehaviour
         if (cardScript != null)
         {
             cardScript.Setup(data, this); 
+        }
+
+        Image cardImage = newCard.GetComponent<Image>();
+        if (cardImage != null)
+        {
+            originalColors.Add(data, cardImage.color);
+        }
+        else
+        {
+            originalColors.Add(data, Color.white); // Sécurité au cas où il n'y a pas d'Image
         }
         
         visualCards.Add(data, newCard);
@@ -118,7 +163,9 @@ public class HandUIManager : MonoBehaviour
         {
             cardObj.transform.SetParent(null);
             Destroy(cardObj);
+            
             visualCards.Remove(data);
+            originalColors.Remove(data); // On nettoie la mémoire
         }
     }
 }

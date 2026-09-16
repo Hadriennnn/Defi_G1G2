@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New_Gem_AttaqueRapide", menuName = "TowerDefense/Cards/Gems/AttaqueRapide")]
+[CreateAssetMenu(fileName = "New_Gem_AttaqueRapide", menuName = "TowerDefense/Cards/Gems/Normal/AttaqueRapide")]
 public class GemCard_AttaqueRapide : GemCardData
 {
     public override IGemEffect CreateGemEffect()

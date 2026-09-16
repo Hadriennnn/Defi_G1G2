@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9084575f041084a4c97ef84ff308c451, type: 3}
+  m_Name: Gem_NoyauBasique
+  m_EditorClassIdentifier: Assembly-CSharp::GemCard_NoyauBasique
+  idCarte: NoyauBasique
+  nomCarte: Noyau Basique
+  description: "[noyau] : permet \xE0 une tour d\u2019\xEAtre active. \nN\u2019a
+    aucun autre effet"
+  cost: 1
+  icon: {fileID: 0}
+  maxCharges: 3
+  gemCategory: 0

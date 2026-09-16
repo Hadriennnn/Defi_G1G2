@@ -16,8 +16,7 @@ MonoBehaviour:
   nomCarte: Tour Sniper
   description: Tour de sniper
   cost: 2
-  icon: {fileID: 0}
+  icon: {fileID: 2758268629743455987, guid: 4013c3386dab5f94ea0c5354d62d4e89, type: 3}
   maxCharges: 2
-  currentCharges: 0
   chassisPrefab: {fileID: 4263162237451298210, guid: 22d9838da09ae6544b25d7ba5a06d5aa, type: 3}
   isMultiCast: 0

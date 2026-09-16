@@ -13,10 +13,11 @@ public class HealthBarManager : MonoBehaviour
 
     private Camera mainCam;
 
-    void Start()
+    public void Init()
     {
         mainCam = Camera.main;
     }
+
 
     void OnEnable()
     {

@@ -415,17 +415,23 @@ MonoBehaviour:
   startingDeck:
   - {fileID: 11400000, guid: 9061e580980383d4fa941d92030fe274, type: 2}
   - {fileID: 11400000, guid: 9061e580980383d4fa941d92030fe274, type: 2}
-  - {fileID: 11400000, guid: 9061e580980383d4fa941d92030fe274, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
+  - {fileID: 11400000, guid: c7464b75b578af44db64ef5c2fb7beaf, type: 2}
   - {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
+  - {fileID: 11400000, guid: 63790e5bbac0435498e0d4e4258074fd, type: 2}
+  - {fileID: 11400000, guid: 63790e5bbac0435498e0d4e4258074fd, type: 2}
+  - {fileID: 11400000, guid: c7464b75b578af44db64ef5c2fb7beaf, type: 2}
   - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
-  - {fileID: 11400000, guid: 7a4c0d81900adb94c911ae711e5005b1, type: 2}
+  - {fileID: 11400000, guid: 2879254df3326fb4385e6e8da5146574, type: 2}
   - {fileID: 11400000, guid: 5a4da7d71a05e7b4aa83a88ab70ac9f9, type: 2}
   - {fileID: 11400000, guid: 5a4da7d71a05e7b4aa83a88ab70ac9f9, type: 2}
+  - {fileID: 11400000, guid: 2879254df3326fb4385e6e8da5146574, type: 2}
+  - {fileID: 11400000, guid: 185d8345e32e29e42ac051ddd28a1219, type: 2}
+  - {fileID: 11400000, guid: 2879254df3326fb4385e6e8da5146574, type: 2}
+  - {fileID: 11400000, guid: c09360a50640d8f4f9c98827a86450ef, type: 2}
+  - {fileID: 11400000, guid: 63790e5bbac0435498e0d4e4258074fd, type: 2}
+  - {fileID: 11400000, guid: 63790e5bbac0435498e0d4e4258074fd, type: 2}
   maxHandSize: 4
   mulliganEnergyCost: 1
 --- !u!114 &216323883
@@ -440,7 +446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 120f620003fb05941bf7ef1caef8e630, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseManager
-  maxHealth: 5000
+  maxHealth: 20
 --- !u!1 &271755508
 GameObject:
   m_ObjectHideFlags: 0
@@ -1540,7 +1546,10 @@ MonoBehaviour:
   gridData: {fileID: 1569267835}
   pathfinding: {fileID: 1569267831}
   gridVisualizer: {fileID: 1569267834}
-  gameManager: {fileID: 216323879}
+  topBarUI: {fileID: 340397762}
+  handUI: {fileID: 378692240}
+  healthBarManager: {fileID: 340397763}
+  cameraController: {fileID: 1096118922}
 --- !u!4 &631115172
 Transform:
   m_ObjectHideFlags: 0
@@ -2720,6 +2729,7 @@ GameObject:
   - component: {fileID: 1569267833}
   - component: {fileID: 1569267831}
   - component: {fileID: 1569267832}
+  - component: {fileID: 1569267836}
   - component: {fileID: 1569267835}
   - component: {fileID: 1569267834}
   m_Layer: 0
@@ -2768,15 +2778,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a49953a3b43db2c42941e86d1c142d39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacementManager
-  defaultHoverIndicator: {fileID: 1497212644}
-  cardHoverIndicator: {fileID: 92676713}
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 128
+  debugCardToTest: {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 64
-  debugCardToTest: {fileID: 11400000, guid: 889ce623f3074e845b6d0963e13e846a, type: 2}
 --- !u!65 &1569267833
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2844,6 +2849,23 @@ MonoBehaviour:
   cellSize: 1
   largeur: 16
   hauteur: 9
+--- !u!114 &1569267836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1569267828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd7744d348c4a274b9572b6c73509b46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GridInputController
+  defaultHoverIndicator: {fileID: 1497212644}
+  cardHoverIndicator: {fileID: 92676713}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!1 &1683408213
 GameObject:
   m_ObjectHideFlags: 0

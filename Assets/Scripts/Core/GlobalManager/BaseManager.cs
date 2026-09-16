@@ -9,36 +9,32 @@ public class BaseManager : MonoBehaviour
     
     private int currentHealth;
 
+    // NOUVEAU : On permet aux autres scripts de lire la vie
+    public int CurrentHealth => currentHealth;
+    public int MaxHealth => maxHealth;
+
     void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
 
-    void Start()
+    // Le fameux Init
+    public void Init()
     {
         currentHealth = maxHealth;
-        // On prévient l'UI au début
         GameEvents.TriggerBaseHealthChanged(currentHealth, maxHealth);
     }
 
-    void OnEnable()
-    {
-        GameEvents.OnBaseDamaged += TakeDamage;
-    }
-
-    void OnDisable()
-    {
-        GameEvents.OnBaseDamaged -= TakeDamage;
-    }
+    void OnEnable() { GameEvents.OnBaseDamaged += TakeDamage; }
+    void OnDisable() { GameEvents.OnBaseDamaged -= TakeDamage; }
 
     private void TakeDamage(int damageAmount)
     {
-        // Si on est déjà mort on ignore
         if (currentHealth <= 0) return;
 
         currentHealth -= damageAmount;
-        currentHealth = Mathf.Max(0, currentHealth); // On empêche de descendre sous 0
+        currentHealth = Mathf.Max(0, currentHealth); 
 
         Debug.Log($"[BaseManager] La base prend {damageAmount} dégâts ; PV restants : {currentHealth}/{maxHealth}");
 

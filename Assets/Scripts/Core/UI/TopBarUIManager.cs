@@ -30,12 +30,17 @@ public class TopBarUIManager : MonoBehaviour
         }
     }
 
-    void Start()
+    public void Init()
     {
-        // Les abonnements aux Singletons (Instance) doivent se faire dans le Start !
         if (EnergyManager.Instance != null)
         {
             EnergyManager.Instance.OnEnergyChanged += UpdateEnergyText;
+        }
+
+        // NOUVEAU : On "Pull" la donnée manuellement pour être sûr de l'afficher au démarrage !
+        if (BaseManager.Instance != null)
+        {
+            UpdateBaseHealthText(BaseManager.Instance.CurrentHealth, BaseManager.Instance.MaxHealth);
         }
 
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
@@ -44,33 +49,21 @@ public class TopBarUIManager : MonoBehaviour
 
     private void UpdateWaveText(int waveNumber)
     {
-        if (waveText != null)
-        {
-            waveText.text = $"Vague : {waveNumber}";
-        }
+        if (waveText != null) waveText.text = $"Vague : {waveNumber}";
     }
 
     private void UpdateEnergyText(int currentEnergy, int maxEnergy)
     {
-        if (energyText != null)
-        {
-            energyText.text = $"Énergie : {currentEnergy} / {maxEnergy}";
-        }
+        if (energyText != null) energyText.text = $"Énergie : {currentEnergy} / {maxEnergy}";
     }
 
     private void UpdateBaseHealthText(int currentHealth, int maxHealth)
     {
-        if (baseHealthText != null)
-        {
-            baseHealthText.text = $"Base : {currentHealth} / {maxHealth} PV";
-        }
+        if (baseHealthText != null) baseHealthText.text = $"Base : {currentHealth} / {maxHealth} PV";
     }
 
     private void ShowGameOverScreen()
     {
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(true);
-        }
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
     }
 }

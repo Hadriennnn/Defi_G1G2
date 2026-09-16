@@ -16,6 +16,8 @@ public struct HitPayload
     public GameObject instigator; 
     public List<StatusEffect> effectsToApply; 
     public bool isCritical; // plus tard mais au cas où
+
+    public float aoeRadius; // Pour les AoE : =0 : single target et >0 c'est aoe
 }
 
 public interface IStatusReceiver

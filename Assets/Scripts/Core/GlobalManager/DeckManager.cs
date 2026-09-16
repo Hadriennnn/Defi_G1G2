@@ -30,10 +30,9 @@ public class DeckManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    void Start()
+    public void Init()
     {
         InitializeDeckForNewAct();
-        DrawHand();
     }
 
     void OnEnable() { GameEvents.OnGameStateChanged += HandleGameStateChanged; }

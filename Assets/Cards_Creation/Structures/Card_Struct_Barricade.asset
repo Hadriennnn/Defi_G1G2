@@ -16,8 +16,7 @@ MonoBehaviour:
   nomCarte: Barricade
   description: Barricade
   cost: 1
-  icon: {fileID: 0}
+  icon: {fileID: -6186678800675127063, guid: 6efc1d5d5d058864bb19c6214a67d903, type: 3}
   maxCharges: 10
-  currentCharges: 0
   chassisPrefab: {fileID: 5696111426729847908, guid: e3bf374ce300c8445b1b64e179a45b3e, type: 3}
   isMultiCast: 1

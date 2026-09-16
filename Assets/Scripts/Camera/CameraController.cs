@@ -32,7 +32,7 @@ public class CameraController : MonoBehaviour
 
     private bool isInitialized = false;
 
-    void Start()
+    public void Init()
     {
         currentRotationY = transform.eulerAngles.y;
 

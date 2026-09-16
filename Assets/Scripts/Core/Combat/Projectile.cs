@@ -1,8 +1,5 @@
 using UnityEngine;
 
-/*
- * RÉSUMÉ : Gère le déplacement physique 3D du projectile vers sa cible.
- */
 public class Projectile : MonoBehaviour
 {
     public float speed = 15f;
@@ -21,7 +18,7 @@ public class Projectile : MonoBehaviour
     {
         if (target == null)
         {
-            RetournerAuPool(); // <--- REMPLACE Destroy(gameObject)
+            RetournerAuPool(); 
             return;
         }
 
@@ -30,13 +27,38 @@ public class Projectile : MonoBehaviour
         
         if (Physics.Raycast(transform.position, direction, out RaycastHit hit, distanceThisFrame, enemyLayer))
         {
-            IStatusReceiver receiver = hit.collider.GetComponent<IStatusReceiver>();
-            if (receiver != null)
+            // 1. On prévient la tour (Les gemmes peuvent encore modifier l'AoE ici !)
+            if (myPayload.instigator != null)
             {
-                receiver.ReceivePayload(myPayload);
+                BasicTower tower = myPayload.instigator.GetComponent<BasicTower>();
+                if (tower != null) 
+                {
+                    tower.NotifyHit(ref myPayload, hit.collider.gameObject);
+                }
             }
 
-            RetournerAuPool(); // <--- REMPLACE Destroy(gameObject)
+            // 2. GESTION DE L'IMPACT (Monocible vs AoE)
+            if (myPayload.aoeRadius > 0f)
+            {
+                // EXPLOSION ! On récupère tous les ennemis dans le rayon
+                Collider[] hits = Physics.OverlapSphere(hit.point, myPayload.aoeRadius, enemyLayer);
+                foreach (Collider c in hits)
+                {
+                    IStatusReceiver receiver = c.GetComponent<IStatusReceiver>();
+                    if (receiver != null) receiver.ReceivePayload(myPayload);
+                }
+                
+                // Petit retour visuel basique (optionnel, pour tes tests)
+                Debug.Log($"[Projectile] Explosion AoE ! Rayon: {myPayload.aoeRadius}, Touchés: {hits.Length}");
+            }
+            else
+            {
+                // TIR NORMAL (Monocible)
+                IStatusReceiver receiver = hit.collider.GetComponent<IStatusReceiver>();
+                if (receiver != null) receiver.ReceivePayload(myPayload);
+            }
+
+            RetournerAuPool();
             return;
         }
 
@@ -46,13 +68,7 @@ public class Projectile : MonoBehaviour
     
     private void RetournerAuPool()
     {
-        if (TryGetComponent<PooledItem>(out PooledItem pooledItem))
-        {
-            pooledItem.ReleaseToPool();
-        }
-        else
-        {
-            Destroy(gameObject); // Sécurité de repli
-        }
+        if (TryGetComponent<PooledItem>(out PooledItem pooledItem)) pooledItem.ReleaseToPool();
+        else Destroy(gameObject); 
     }
 }
