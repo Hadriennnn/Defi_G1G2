@@ -2,22 +2,31 @@ using UnityEngine;
 
 // --- 1. ONDE DE STASE ---
 
-// La Logique C# pure
 public class SpellLogic_OndeDeStase : ISpellEffect
 {
     private float aoeRadius;
     private float duration;
+    private GameObject vfxPrefab; 
 
-    public SpellLogic_OndeDeStase(float radius, float stunDuration)
+    public SpellLogic_OndeDeStase(float radius, float stunDuration, GameObject vfx)
     {
         aoeRadius = radius;
         duration = stunDuration;
+        vfxPrefab = vfx;
     }
 
     public void Execute(Vector3 targetPosition)
     {
         Debug.Log($"[Sort] Onde de Stase explosée ! Rayon: {aoeRadius}");
         
+        if (vfxPrefab != null)
+        {
+            GameObject vfx = PoolManager.Instance.Spawn(vfxPrefab, targetPosition, Quaternion.identity);
+            ExplosionVFX vfxScript = vfx.GetComponent<ExplosionVFX>();
+            // La taille du VFX s'adapte à la taille du sort 
+            if (vfxScript != null) vfxScript.Setup(aoeRadius);
+        }
+
         Collider[] hits = Physics.OverlapSphere(targetPosition, aoeRadius);
         foreach (Collider c in hits)
         {
@@ -32,39 +41,49 @@ public class SpellLogic_OndeDeStase : ISpellEffect
     }
 }
 
-// Le ScriptableObject (La Carte dans l'éditeur)
 [CreateAssetMenu(fileName = "New_Spell_OndeStase", menuName = "TowerDefense/Cards/Spells/Onde de Stase")]
 public class SpellCard_OndeDeStase : SpellCardData
 {
     [Header("Paramètres du Sort")]
-    public float radius = 5f;
-    public float freezeDuration = 3f;
+    public float radius = 0.5f;
+    public float freezeDuration = 2f;
+    
+    [Header("Visuel")]
+    public GameObject vfxPrefab; 
 
     public override ISpellEffect CreateSpellEffect()
     {
-        return new SpellLogic_OndeDeStase(radius, freezeDuration);
+        return new SpellLogic_OndeDeStase(radius, freezeDuration, vfxPrefab);
     }
 }
 
 
 // --- 2. FUMIGÈNE ---
 
-// La Logique C# pure
 public class SpellLogic_Fumigene : ISpellEffect
 {
     private float aoeRadius;
     private float duration;
+    private GameObject vfxPrefab; 
 
-    public SpellLogic_Fumigene(float radius, float smokeDuration)
+    public SpellLogic_Fumigene(float radius, float smokeDuration, GameObject vfx)
     {
         aoeRadius = radius;
         duration = smokeDuration;
+        vfxPrefab = vfx;
     }
 
     public void Execute(Vector3 targetPosition)
     {
         Debug.Log($"[Sort] Fumigène lancé ! Rayon: {aoeRadius}");
         
+        if (vfxPrefab != null)
+        {
+            GameObject vfx = PoolManager.Instance.Spawn(vfxPrefab, targetPosition, Quaternion.identity);
+            ExplosionVFX vfxScript = vfx.GetComponent<ExplosionVFX>();
+            if (vfxScript != null) vfxScript.Setup(aoeRadius);
+        }
+
         Collider[] hits = Physics.OverlapSphere(targetPosition, aoeRadius);
         foreach (Collider c in hits)
         {
@@ -79,16 +98,18 @@ public class SpellLogic_Fumigene : ISpellEffect
     }
 }
 
-// Le ScriptableObject (La Carte dans l'éditeur)
 [CreateAssetMenu(fileName = "New_Spell_Fumigene", menuName = "TowerDefense/Cards/Spells/Fumigene")]
 public class SpellCard_Fumigene : SpellCardData
 {
     [Header("Paramètres du Sort")]
-    public float radius = 8f;
-    public float slowDuration = 6f;
+    public float radius = 1f;
+    public float slowDuration = 2f;
+    
+    [Header("Visuel")]
+    public GameObject vfxPrefab; 
 
     public override ISpellEffect CreateSpellEffect()
     {
-        return new SpellLogic_Fumigene(radius, slowDuration);
+        return new SpellLogic_Fumigene(radius, slowDuration, vfxPrefab);
     }
 }

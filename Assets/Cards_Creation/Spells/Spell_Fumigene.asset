@@ -17,7 +17,8 @@ MonoBehaviour:
   description: 
   cost: 1
   icon: {fileID: 0}
-  maxCharges: 1
+  maxCharges: 2
   requiresTargeting: 0
   radius: 2
   slowDuration: 3
+  vfxPrefab: {fileID: 3673041597690572944, guid: 3991870684cfaac48b7e7c23970e085a, type: 3}

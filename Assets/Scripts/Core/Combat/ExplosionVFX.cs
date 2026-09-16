@@ -2,13 +2,25 @@ using UnityEngine;
 
 public class ExplosionVFX : MonoBehaviour
 {
+    [Tooltip("Durée de vie avant de disparaître (en secondes)")]
     public float lifetime = 2f; 
+    
+    [Tooltip("Si coché, l'objet grossit aussi en hauteur (Sphère). Si décoché, l'objet reste plat (Disque au sol).")]
+    public bool scaleYAxis = false; 
+
     private float timer;
 
     public void Setup(float aoeRadius)
     {
-        // (Un rayon de 2 donne une échelle de 4)
-        transform.localScale = new Vector3(aoeRadius * 2, aoeRadius * 2, aoeRadius * 2);
+        // On calcule la taille (Diamètre = Rayon * 2)
+        float targetSize = aoeRadius * 2f;
+
+        // Si disque,
+        float targetY = scaleYAxis ? targetSize : transform.localScale.y;
+
+        // On applique l'échelle
+        transform.localScale = new Vector3(targetSize, targetY, targetSize);
+        
         timer = 0f;
     }
 
@@ -17,7 +29,6 @@ public class ExplosionVFX : MonoBehaviour
         timer += Time.deltaTime;
         if (timer >= lifetime)
         {
-            // Retour dans le PoolManager
             if (TryGetComponent<PooledItem>(out PooledItem poolItem))
             {
                 poolItem.ReleaseToPool();

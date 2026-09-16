@@ -21,3 +21,4 @@ MonoBehaviour:
   requiresTargeting: 0
   radius: 1
   freezeDuration: 2
+  vfxPrefab: {fileID: 3673041597690572944, guid: 3991870684cfaac48b7e7c23970e085a, type: 3}
