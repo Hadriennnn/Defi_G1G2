@@ -64,6 +64,9 @@ public static class GameEvents
 
     public static event Action<CardInstance> OnCardChargesUpdated;
     public static void TriggerCardChargesUpdated(CardInstance card) => OnCardChargesUpdated?.Invoke(card);
+    
+    public static event Action OnArmedSpellsChanged;
+    public static void TriggerArmedSpellsChanged() => OnArmedSpellsChanged?.Invoke();
 }
 
 public enum GameState

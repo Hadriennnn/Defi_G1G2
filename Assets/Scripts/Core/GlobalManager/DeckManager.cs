@@ -10,14 +10,15 @@ public class DeckManager : MonoBehaviour
     public List<CardData> startingDeck; 
     public int maxHandSize = 6; 
     
-    [Header("Coûts (Balatro)")]
+    [Header("Coûts Mulligan")]
     public int mulliganEnergyCost = 1;
 
     private List<CardInstance> drawPile = new List<CardInstance>();
     private List<CardInstance> hand = new List<CardInstance>();
     private List<CardInstance> discardPile = new List<CardInstance>();
     private List<CardInstance> exhaustedPile = new List<CardInstance>(); 
-    private List<CardInstance> armedSpells = new List<CardInstance>();   
+    public List<CardData> armedSpells = new List<CardData>();   
+    
 
     // UI
     public event Action<CardInstance> OnCardDrawn;
@@ -40,7 +41,11 @@ public class DeckManager : MonoBehaviour
 
     private void HandleGameStateChanged(GameState state)
     {
-        if (state == GameState.PreparationPhase) DrawHand();
+        if (state == GameState.PreparationPhase)
+        {
+            hand.Clear(); 
+            DrawHand();
+        }
         else if (state == GameState.ActionPhase) DiscardEntireHand();
     }
 
@@ -85,6 +90,54 @@ public class DeckManager : MonoBehaviour
         hand.Add(drawnCard);
 
         OnCardDrawn?.Invoke(drawnCard);
+    }
+    
+    //  GESTION DES SORTS ARMÉS 
+
+    public bool TryArmSpell(CardInstance card)
+    {
+        if (card.Data is SpellCardData && armedSpells.Count < 3) 
+        {
+            if (EnergyManager.Instance.TrySpendEnergy(card.Data.cost))
+            {
+                card.CurrentCharges--;
+                hand.Remove(card);
+
+                if (card.CurrentCharges <= 0) exhaustedPile.Add(card);
+                else discardPile.Add(card);
+                
+                OnCardDiscarded?.Invoke(card); 
+                armedSpells.Add(card.Data);
+                
+                // MODIFIÉ ICI
+                GameEvents.TriggerArmedSpellsChanged(); 
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public void ConsumeArmedSpell(CardData spellData)
+    {
+        if (armedSpells.Contains(spellData))
+        {
+            armedSpells.Remove(spellData);
+        }
+    }
+    
+    public void UnarmSpell(CardData spellData)
+    {
+        if (armedSpells.Contains(spellData) && hand.Count < maxHandSize)
+        {
+            armedSpells.Remove(spellData);
+            
+            CardInstance returnedCard = new CardInstance(spellData);
+            hand.Add(returnedCard);
+            OnCardDrawn?.Invoke(returnedCard); 
+            
+            GameEvents.TriggerArmedSpellsChanged(); 
+        }
     }
     
     public void UseCardAndDiscard(CardInstance card)

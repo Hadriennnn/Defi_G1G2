@@ -19,7 +19,6 @@ public class PlacementManager : MonoBehaviour
     private bool isProcessingCard = false;
     private bool peutPlacer = true;
 
-    // Le PlacementManager n'a plus besoin d'Update() pour la souris !
 
     void Awake()  
     {  
@@ -45,12 +44,8 @@ public class PlacementManager : MonoBehaviour
 
     private void GererChangementDePhase(GameState newState)
     {
-        if (newState == GameState.PreparationPhase) peutPlacer = true;
-        else if (newState == GameState.ActionPhase)
-        {
-            peutPlacer = false;
-            DeselectCard();
-        }
+        peutPlacer = true;
+        DeselectCard();
     }
 
     private void SelectCard(CardInstance card)
@@ -65,33 +60,55 @@ public class PlacementManager : MonoBehaviour
         GameEvents.TriggerCardDeselected(); 
     }
 
-    // NOUVEAU : Appelée par le GridInputController quand on clique
-    public async void TryPlayCardAt(Vector2Int targetCoords)  
+     public async void TryPlayCardAt(Vector2Int targetCoords)  
     {  
         if (!peutPlacer || ActiveCard == null || isProcessingCard) return;
-
         if (LevelManager.Instance != null && LevelManager.Instance.IsStartOrEnd(targetCoords)) return; 
+
+        // RÈGLES DE PHASES 
+        GameState currentState = GameManager.Instance.CurrentState;
+        
+        if (currentState == GameState.PreparationPhase && ActiveCard.Data is SpellCardData)
+        {
+            Debug.LogWarning("Les sorts doivent être glissés dans la Zone d'Armement");
+            return;
+        }
+        
+        if (currentState == GameState.ActionPhase && !(ActiveCard.Data is SpellCardData))
+        {
+            Debug.LogWarning("Impossible de construire pendant le combat !");
+            return;
+        }
+        // -------------------------
 
         isProcessingCard = true; 
 
         if (await ActiveCard.Data.TryPlayCardAsync(targetCoords, this))
         {
-            bool keepInHand = false;
-
-            if (ActiveCard.Data is StructureCardData structureCard)
+            if (currentState == GameState.PreparationPhase)
             {
-                if (structureCard.isMultiCast && ActiveCard.CurrentCharges > 1)
+                // Logique normale pour les tours
+                bool keepInHand = false;
+                if (ActiveCard.Data is StructureCardData structureCard && structureCard.isMultiCast && ActiveCard.CurrentCharges > 1)
                 {
                     keepInHand = true;
                     ActiveCard.CurrentCharges--; 
                     GameEvents.TriggerCardChargesUpdated(ActiveCard);
                 }
-            }
 
-            if (!keepInHand)
+                if (!keepInHand)
+                {
+                    DeckManager.Instance.UseCardAndDiscard(ActiveCard);
+                    DeselectCard();
+                }
+            }
+            else if (currentState == GameState.ActionPhase)
             {
-                DeckManager.Instance.UseCardAndDiscard(ActiveCard);
+                // En phase d'action, le sort a fait effet, on le supprime des sorts armés
+                DeckManager.Instance.ConsumeArmedSpell(ActiveCard.Data);
                 DeselectCard();
+                
+                FindObjectOfType<HandUIManager>().RefreshActionHand();
             }
         }
         

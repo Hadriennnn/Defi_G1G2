@@ -10,13 +10,16 @@ public class HandUIManager : MonoBehaviour
     public Transform handContainer; 
     
     public TextMeshProUGUI mulliganButtonText; 
+    
+    // NOUVEAU : Référence au bouton de validation de la vague
+    [Tooltip("Le bouton qui permet de lancer la vague (Confirm / Start)")]
+    public GameObject confirmButton; 
 
     private bool isMulliganMode = false;
     private List<CardInstance> cardsSelectedForMulligan = new List<CardInstance>();
     private Dictionary<CardInstance, GameObject> visualCards = new Dictionary<CardInstance, GameObject>();
     
     private Dictionary<CardInstance, Color> originalColors = new Dictionary<CardInstance, Color>();
-
     private CardInstance currentlySelectedCard = null;
 
     public void Init()
@@ -27,11 +30,10 @@ public class HandUIManager : MonoBehaviour
         GameEvents.OnMulliganModeToggled += ToggleMulliganMode;
         GameEvents.OnCardSelected += HandleCardSelected;
         GameEvents.OnCardDeselected += HandleCardDeselected;
+        
+        GameEvents.OnGameStateChanged += HandleGameStateChanged;
 
-        foreach (CardInstance card in DeckManager.Instance.GetHand())
-        {
-            AddCardVisual(card);
-        }
+        foreach (CardInstance card in DeckManager.Instance.GetHand()) AddCardVisual(card);
     }
 
     void OnDestroy()
@@ -44,6 +46,53 @@ public class HandUIManager : MonoBehaviour
         GameEvents.OnMulliganModeToggled -= ToggleMulliganMode;
         GameEvents.OnCardSelected -= HandleCardSelected;
         GameEvents.OnCardDeselected -= HandleCardDeselected;
+        GameEvents.OnGameStateChanged -= HandleGameStateChanged;
+    }
+
+    private void HandleGameStateChanged(GameState state)
+    {
+        if (state == GameState.PreparationPhase)
+        {
+            // On affiche le bouton Mulligan ET le bouton Confirm
+            if (mulliganButtonText != null) mulliganButtonText.transform.parent.gameObject.SetActive(true);
+            if (confirmButton != null) confirmButton.SetActive(true);
+            
+            RefreshPrepHand();
+        }
+        else if (state == GameState.ActionPhase)
+        {
+            // On cache les deux boutons
+            if (mulliganButtonText != null) mulliganButtonText.transform.parent.gameObject.SetActive(false);
+            if (confirmButton != null) confirmButton.SetActive(false);
+            
+            RefreshActionHand();
+        }
+    }
+
+    private void RefreshPrepHand()
+    {
+        List<CardInstance> toRemove = new List<CardInstance>(visualCards.Keys);
+        foreach (var c in toRemove) RemoveCardVisual(c);
+
+        foreach (CardInstance card in DeckManager.Instance.GetHand())
+        {
+            AddCardVisual(card);
+        }
+    }
+
+    public void RefreshActionHand()
+    {
+        if (GameManager.Instance.CurrentState != GameState.ActionPhase) return;
+
+        List<CardInstance> toRemove = new List<CardInstance>(visualCards.Keys);
+        foreach (var c in toRemove) RemoveCardVisual(c);
+
+        foreach (CardData spell in DeckManager.Instance.armedSpells)
+        {
+            CardInstance dummyInstance = new CardInstance(spell);
+            dummyInstance.CurrentCharges = 1; 
+            AddCardVisual(dummyInstance);
+        }
     }
 
     private void ToggleMulliganMode(bool enabled)
@@ -71,7 +120,6 @@ public class HandUIManager : MonoBehaviour
 
         if (visualCards.TryGetValue(card, out GameObject cardObj))
         {
-            // On teinte la carte en vert clair pour montrer qu'elle est sélectionnée
             cardObj.GetComponent<Image>().color = new Color(0.7f, 1f, 0.7f); 
         }
     }
@@ -89,7 +137,6 @@ public class HandUIManager : MonoBehaviour
             CardInstance card = kvp.Key;
             GameObject cardObj = kvp.Value;
 
-            // On restaure TA couleur d'origine
             if (originalColors.TryGetValue(card, out Color baseColor))
             {
                 cardObj.GetComponent<Image>().color = baseColor;
@@ -109,7 +156,7 @@ public class HandUIManager : MonoBehaviour
             else
             {
                 cardsSelectedForMulligan.Add(cardClicked);
-                visualCards[cardClicked].GetComponent<Image>().color = Color.gray; // Gris pour marquer le Mulligan
+                visualCards[cardClicked].GetComponent<Image>().color = Color.gray; 
             }
         }
         else
@@ -151,7 +198,7 @@ public class HandUIManager : MonoBehaviour
         }
         else
         {
-            originalColors.Add(data, Color.white); // Sécurité au cas où il n'y a pas d'Image
+            originalColors.Add(data, Color.white); 
         }
         
         visualCards.Add(data, newCard);
@@ -165,7 +212,7 @@ public class HandUIManager : MonoBehaviour
             Destroy(cardObj);
             
             visualCards.Remove(data);
-            originalColors.Remove(data); // On nettoie la mémoire
+            originalColors.Remove(data); 
         }
     }
 }

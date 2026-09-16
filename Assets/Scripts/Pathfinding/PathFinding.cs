@@ -24,6 +24,7 @@ public class Pathfinding : MonoBehaviour, IPathfinder
     private HashSet<PathNode> cachedTargetNodes = new HashSet<PathNode>();
     
     private bool isCalculating = false;
+    private bool pendingCalculation = false;
 
     public void Init()  
     {  
@@ -33,7 +34,6 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         int maxSize = gridData.largeur * gridData.hauteur;
         openSet = new Heap<PathNode>(maxSize);
         
-        // On lance le calcul initial de façon asynchrone
         _ = CheckAllPathsAsync(); 
     }  
    
@@ -66,7 +66,12 @@ public class Pathfinding : MonoBehaviour, IPathfinder
 
     public async Task<bool> CheckAllPathsAsync()
     {
-        if (isCalculating) return false; // Bloque les clics intempestifs
+        if (isCalculating) 
+        {
+            pendingCalculation = true;
+            return false; 
+        }
+        
         isCalculating = true;
 
         List<Vector2Int> spawns = LevelManager.Instance != null ? LevelManager.Instance.spawnPoints.ToList() : new List<Vector2Int>();
@@ -84,13 +89,12 @@ public class Pathfinding : MonoBehaviour, IPathfinder
         {
             try
             {
-                // VÉRIFICATION DES PORTAILS 
                 foreach (Vector2Int spawnCoord in spawns)
                 {
                     if (!gridData.Grid[spawnCoord.x, spawnCoord.y].isActive) continue;
 
                     HashSet<Node> oldPathForThisSpawn = new HashSet<Node>();
-                    if (safeAnciensChemins.ContainsKey(spawnCoord))
+                    if (safeAnciensChemins.ContainsKey(spawnCoord)) 
                     {
                         oldPathForThisSpawn = new HashSet<Node>(safeAnciensChemins[spawnCoord]);
                     }
@@ -107,9 +111,8 @@ public class Pathfinding : MonoBehaviour, IPathfinder
                     foreach(Node n in pathForThisSpawn) routesExistantes.Add(n);
                 }
 
-                if (!allValid) return; // Si un chemin est bloqué, on arrête 
+                if (!allValid) return; 
 
-                // VÉRIFICATION DE TOUTES LES PORTES 
                 foreach (GlobalSocket door in doors)
                 {
                     if (!gridData.Grid[door.position.x, door.position.y].isActive) continue;
@@ -138,9 +141,9 @@ public class Pathfinding : MonoBehaviour, IPathfinder
             }
         });
 
-        if (backgroundException != null)
+        if (backgroundException != null) 
         {
-            Debug.LogError($"[Pathfinding] Erreur dans le thread arrière-plan : {backgroundException}");
+            Debug.LogError($"[Pathfinding] Erreur arrière-plan : {backgroundException}");
         }
 
         if (allValid)
@@ -161,19 +164,21 @@ public class Pathfinding : MonoBehaviour, IPathfinder
                     float worldZ = origineGrille.z + (n.gridY * gridData.cellSize) + (gridData.cellSize / 2f);
                     waypointsFinaux.Add(new Vector3(worldX, origineGrille.y + 0.5f, worldZ));
                 }
-
-                if (LevelManager.Instance != null)
-                {
-                    LevelManager.Instance.EnregistrerWaypoints(spawnPoint, waypointsFinaux);
-                }
+                if (LevelManager.Instance != null) LevelManager.Instance.EnregistrerWaypoints(spawnPoint, waypointsFinaux);
             }
         }
 
         isCalculating = false;
+
+        if (pendingCalculation)
+        {
+            pendingCalculation = false;
+            _ = CheckAllPathsAsync();
+        }
+
         return allValid;
     }
 
-    // Helper sécurisé pour le Background Thread
     private Vector2Int GetDirectionVector(SocketDirection dir)
     {
         switch (dir)
@@ -262,7 +267,8 @@ public class Pathfinding : MonoBehaviour, IPathfinder
                     else openSet.UpdateItem(neighbor);  
                 }  
             }  
-        }  
+        } 
+        
         return null; 
     }  
 

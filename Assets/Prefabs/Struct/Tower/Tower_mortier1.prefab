@@ -111,8 +111,16 @@ PrefabInstance:
       addedObject: {fileID: -5544811307875393426}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5ba451c864f4a9a499648fde191fb055, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 1730743825126123236}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5ba451c864f4a9a499648fde191fb055, type: 3}
+      insertIndex: -1
       addedObject: {fileID: -7308987272980850922}
   m_SourcePrefab: {fileID: 100100000, guid: 5ba451c864f4a9a499648fde191fb055, type: 3}
+--- !u!23 &370735192640151379 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 5ba451c864f4a9a499648fde191fb055, type: 3}
+  m_PrefabInstance: {fileID: 1361362591111168983}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1544226067178497084 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5ba451c864f4a9a499648fde191fb055, type: 3}
@@ -136,9 +144,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicTower
   baseRange: 3
-  baseFireRate: 0.5
-  initialDamage: 20
-  baseAoERadius: 3
+  baseFireRate: 0.3
+  initialDamage: 15
+  baseAoERadius: 0.6
   Range:
     baseValue: 0
   FireRate:
@@ -150,12 +158,32 @@ MonoBehaviour:
   centerOffset: {x: 0, y: 1, z: 0}
   projectilePrefab: {fileID: 7270111578509950965, guid: e01a84c0212a6ef468a53ae4749d78b0, type: 3}
   firePoint: {fileID: 4209733615910481726}
+  isHoming: 0
+  arcHeight: 2
+  explosionPrefab: {fileID: 4053334184472367363, guid: 425f3a12cdc9d2d4b9941470c78731e6, type: 3}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 64
   maxEnemiesEvaluated: 20
   hasCore: 0
   enemyHitBuffer: []
+--- !u!114 &1730743825126123236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2172390617301319302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22f7b45d8dc58c448a17b3e18661a9ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerVisuals
+  partsToColor:
+  - renderer: {fileID: 370735192640151379}
+    materialIndex: 1
+  colorOff: {r: 1, g: 1, b: 1, a: 1}
+  activeIndicator: {fileID: 0}
 --- !u!114 &-7308987272980850922
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: Spell_OndeStase
+  m_EditorClassIdentifier: Assembly-CSharp::SpellCard_OndeDeStase
+  idCarte: OndeStase
+  nomCarte: Onde de Stase
+  description: Gel les ennemis sur place
+  cost: 1
+  icon: {fileID: 0}
+  maxCharges: 2
+  requiresTargeting: 0
+  radius: 1
+  freezeDuration: 2

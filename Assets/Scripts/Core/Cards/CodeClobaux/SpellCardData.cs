@@ -7,17 +7,15 @@ public abstract class SpellCardData : CardData
 
     public abstract ISpellEffect CreateSpellEffect();
 
-    // 
     public override Task<bool> TryPlayCardAsync(Vector2Int targetCoords, PlacementManager context)
     {
         Node clickedNode = context.GridData.Grid[targetCoords.x, targetCoords.y];  
 
         if (requiresTargeting && !clickedNode.isWalkable && !context.TryGetTowerAt(targetCoords, out _)) 
         {
-            // (Logique ciblée future)
+            // Logique ciblée future
         }
 
-        if (!EnergyManager.Instance.TrySpendEnergy(cost)) return Task.FromResult(false);
 
         Vector3 targetPos = context.GetWorldPosition(targetCoords);
         ISpellEffect spellLogic = CreateSpellEffect();

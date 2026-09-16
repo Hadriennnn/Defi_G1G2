@@ -7,23 +7,28 @@ public class BasicTower : MonoBehaviour
     [SerializeField] private float baseRange = 5f;
     [SerializeField] private float baseFireRate = 1f; 
     [SerializeField] private float initialDamage = 25f;
-    
-    [Tooltip("Rayon de l'explosion. 0 = Tir Monocible.")]
-    [SerializeField] private float baseAoERadius = 0f; // NOUVEAU
+    [SerializeField] private float baseAoERadius = 0f; 
 
     public Stat Range;
     public Stat FireRate;
     public Stat Damage;
-    public Stat AoERadius; // NOUVEAU
+    public Stat AoERadius; 
 
     public Vector3 centerOffset = new Vector3(0f, 1f, 0f);
 
-    [Header("Références (Logique)")]
+    [Header("Balistique & VFX")]
     public GameObject projectilePrefab;
     public Transform firePoint;
-    public LayerMask enemyLayer; 
     
+    [Tooltip("Si décoché, le tir vise un point fixe au sol (esquivable).")]
+    public bool isHoming = true;
+    [Tooltip("Hauteur de la courbe en cloche. 0 = Tir droit.")]
+    public float arcHeight = 0f;
+    [Tooltip("Le visuel qui apparait à l'impact (si AoE > 0)")]
+    public GameObject explosionPrefab;
+
     [Header("Optimisation")]
+    public LayerMask enemyLayer; 
     [SerializeField] private int maxEnemiesEvaluated = 20;
 
     public bool hasCore = false;
@@ -49,13 +54,12 @@ public class BasicTower : MonoBehaviour
         Range = new Stat(baseRange);
         FireRate = new Stat(baseFireRate);
         Damage = new Stat(initialDamage);
-        AoERadius = new Stat(baseAoERadius); // NOUVEAU
+        AoERadius = new Stat(baseAoERadius); 
         
         enemyHitBuffer = new Collider[maxEnemiesEvaluated];
         targetingLogic = DefaultNearestTargeting;
     }
 
-    // [...] (Update et DefaultNearestTargeting restent inchangés)
     void Update()
     {
         if (!hasCore) return;
@@ -90,11 +94,9 @@ public class BasicTower : MonoBehaviour
         }
         return nearestEnemy;
     }
-    // [...]
 
     void Shoot()
     {
-        // MODIFIÉ : On intègre l'AoERadius au colis
         HitPayload payload = new HitPayload 
         { 
             rawDamage = Damage.Value,
@@ -110,7 +112,11 @@ public class BasicTower : MonoBehaviour
         GameObject projGO = PoolManager.Instance.Spawn(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectile = projGO.GetComponent<Projectile>();
         
-        if (projectile != null) projectile.Fire(currentTarget, payload);
+        // La tour passe toute la configuration visuelle et physique au projectile
+        if (projectile != null) 
+        {
+            projectile.Fire(currentTarget, payload, isHoming, arcHeight, explosionPrefab);
+        }
 
         OnShoot?.Invoke();
     }
