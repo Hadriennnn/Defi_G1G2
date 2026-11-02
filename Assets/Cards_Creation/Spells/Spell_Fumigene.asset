@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 5d6ce80358629b34fa55690d69c7dc8d, type: 3}
   m_Name: Spell_Fumigene
   m_EditorClassIdentifier: Assembly-CSharp::SpellCard_Fumigene
-  idCarte: 'Fumigene '
-  nomCarte: 'Fumigene '
-  description: 
+  idCarte: Fumigene
+  nomCarte: Fumigene
+  description: 'ralentit les ennemis dans la zone '
   cost: 1
   icon: {fileID: 0}
   maxCharges: 2

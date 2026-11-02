@@ -9,15 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 6ff8979f427eff240b3b248ec17c93f9, type: 3}
   m_Name: Spell_OndeStase
   m_EditorClassIdentifier: Assembly-CSharp::SpellCard_OndeDeStase
   idCarte: OndeStase
   nomCarte: Onde de Stase
-  description: Gel les ennemis sur place
-  cost: 1
+  description: "Gele les \xE9nnemis dans la zone "
+  cost: 2
   icon: {fileID: 0}
-  maxCharges: 2
+  maxCharges: 3
   requiresTargeting: 0
   radius: 1
   freezeDuration: 2

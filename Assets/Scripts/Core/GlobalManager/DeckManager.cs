@@ -59,7 +59,15 @@ public class DeckManager : MonoBehaviour
 
         foreach (CardData baseCard in startingDeck)
         {
-            drawPile.Add(new CardInstance(baseCard));
+            
+            if (baseCard != null)
+            {
+                drawPile.Add(new CardInstance(baseCard));
+            }
+            else
+            {
+                Debug.LogWarning("[DeckManager] Attention : Une case vide a été trouvée dans le Starting Deck de l'inspecteur ! Elle a été ignorée.");
+            }
         }
         
         Shuffle(drawPile);
